@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+
+# Config con el token real de Oracle Simphony: nunca se versiona.
+# Se recrea solo (sin token) la primera vez que corre la app; el token
+# se completa desde la variable de entorno STS_TOKEN (ver sts_client.py)
+# o pegándolo en el panel de conexión de la app.
+backend/sts_config.json
+
+# Config local de Claude Code, no forma parte del proyecto.
+.claude/

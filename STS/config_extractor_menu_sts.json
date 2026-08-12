@@ -1,0 +1,38 @@
+{
+	"api": {
+		"base_url": "https://rbi1-sts.oraclemicros.com",
+		"endpoint": "/api/v1/menus/{menuId}",
+		"org": "ppe",
+		"timeout": 30,
+		"max_retries": 3,
+		"auth": {
+			"token": "",
+			"comentario": "Se envía como header 'Authorization: Bearer {token}'. NO pegar el token acá: se carga desde la variable de entorno STS_TOKEN para no versionarlo en git. Para uso local, definila en tu entorno o pegala directamente en el panel de conexión de la app."
+		},
+		"headers_adicionales": {
+			"comentario": "El servicio exige estos 3 headers ademas del menuId en el path. Deben coincidir con los mismos valores usados para construir el menuId.",
+			"Simphony-OrgShortName": "PPE",
+			"Simphony-LocRef": "{env_locRef}",
+			"Simphony-RvcRef": "{locRef}"
+		}
+	},
+	"menuId": {
+		"comentario": "menuId final = {org}:{env_locRef}:{locRef}",
+		"env_locRef": "5990",
+		"locRef": "101"
+	},
+	"idiomas": {
+		"nombre_ingles": "en-US",
+		"nombre_espanol": "es-MX"
+	},
+	"output": {
+		"directorio": "./reportes_menu_sts",
+		"prefijo_archivo": "Menu_STS",
+		"guardar_json_crudo": true
+	},
+	"logging": {
+		"nivel": "INFO",
+		"archivo_log": "./extractor_menu_sts.log",
+		"formato": "[%(asctime)s] %(levelname)s: %(message)s"
+	}
+}

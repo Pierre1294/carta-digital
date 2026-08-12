@@ -1,0 +1,450 @@
+[
+  {
+    "id": 15,
+    "nombre": "Banquete del Día",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 16,
+    "nombre": "Hora del Almuerzo",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 17,
+    "nombre": "Promos de Locura",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 18,
+    "nombre": "Salsaton Futbol",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 19,
+    "nombre": "Full Box",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 20,
+    "nombre": "Pollo Frito",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 21,
+    "nombre": "Tenders",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 22,
+    "nombre": "Nuggets",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 23,
+    "nombre": "Alitas",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 24,
+    "nombre": "Wraps",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 25,
+    "nombre": "Sandwich",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 26,
+    "nombre": "Chicharron Pop",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 27,
+    "nombre": "Complementos y Salsas",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 28,
+    "nombre": "Bebidas",
+    "marca": "Popeyes",
+    "agregador": "DIDI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 29,
+    "nombre": "Banquete del Día",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 30,
+    "nombre": "Hora del Almuerzo",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 31,
+    "nombre": "Promos de Locura",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 32,
+    "nombre": "Salsaton Futbol",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 33,
+    "nombre": "Full Box",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 34,
+    "nombre": "Pollo Frito",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 35,
+    "nombre": "Tenders",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 36,
+    "nombre": "Nuggets",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 37,
+    "nombre": "Alitas",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 38,
+    "nombre": "Wraps",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 39,
+    "nombre": "Sandwich",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 40,
+    "nombre": "Chicharron Pop",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 41,
+    "nombre": "Complementos y Salsas",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 42,
+    "nombre": "Bebidas",
+    "marca": "Popeyes",
+    "agregador": "PEDIDOSYA",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 43,
+    "nombre": "Banquete del Día",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 44,
+    "nombre": "Hora del Almuerzo",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 45,
+    "nombre": "Promos de Locura",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 46,
+    "nombre": "Salsaton Futbol",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 47,
+    "nombre": "Full Box",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 48,
+    "nombre": "Pollo Frito",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 49,
+    "nombre": "Tenders",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 50,
+    "nombre": "Nuggets",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 51,
+    "nombre": "Alitas",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 52,
+    "nombre": "Wraps",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 53,
+    "nombre": "Sandwich",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 54,
+    "nombre": "Chicharron Pop",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 55,
+    "nombre": "Complementos y Salsas",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 56,
+    "nombre": "Bebidas",
+    "marca": "Popeyes",
+    "agregador": "LLAMAFOOD",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 1,
+    "nombre": "Banquete del Día",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 2,
+    "nombre": "Hora del Almuerzo",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 3,
+    "nombre": "Promos de Locura",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 4,
+    "nombre": "Salsaton Futbol",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 5,
+    "nombre": "Full Box",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 6,
+    "nombre": "Pollo Frito",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 7,
+    "nombre": "Tenders",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 9,
+    "nombre": "Alitas",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 8,
+    "nombre": "Nuggets",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 10,
+    "nombre": "Wraps",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 11,
+    "nombre": "Sandwich",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 12,
+    "nombre": "Chicharron Pop",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 13,
+    "nombre": "Complementos y Salsas",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 14,
+    "nombre": "Bebidas",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  }
+]

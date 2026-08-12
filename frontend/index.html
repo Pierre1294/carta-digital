@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carta Digital · POC Agregadores</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<div class="page-wrap">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="w-9 h-9 rounded-lg bg-slate-900 text-white grid place-items-center font-bold shrink-0">C</div>
+      <div class="brand-text">
+        <h1 class="text-sm font-semibold leading-tight">Carta Digital</h1>
+        <p class="text-[11px] text-slate-400 leading-tight">POC · Menú por agregador</p>
+      </div>
+      <button class="collapse-btn" id="collapse-btn" title="Contraer menú" aria-label="Contraer menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <nav class="nav" id="main-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">General</div>
+        <button class="nav-item" data-view="resumen">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg></span>
+          <span class="nav-label">Resumen</span>
+        </button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Catálogo</div>
+        <div id="nav-aggregators"></div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Maestros</div>
+        <button class="nav-item" data-view="preguntas">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="nav-label">Preguntas comerciales</span>
+        </button>
+        <button class="nav-item" data-view="categorias">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9l-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="nav-label">Categorías</span>
+        </button>
+        <button class="nav-item" data-view="cartas">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="nav-label">Cartas por agregador</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span id="conn-status" class="hidden inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border w-fit">
+        <span id="conn-dot" class="w-1.5 h-1.5 rounded-full"></span>
+        <span id="conn-text">Verificando…</span>
+      </span>
+      <button id="btn-settings" class="conn-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        <span>Conexión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Fondo oscuro detrás del sidebar cuando se abre como menú deslizable en móvil -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button id="btn-menu-toggle" class="icon-btn menu-toggle-btn" title="Abrir menú" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+        </button>
+        <div class="min-w-0">
+          <p class="topbar-eyebrow" id="topbar-eyebrow">Panel</p>
+          <h2 class="topbar-title" id="topbar-title">Resumen</h2>
+          <p class="topbar-sub" id="topbar-sub">Estado del catálogo en los agregadores configurados</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="last-updated" class="text-xs text-slate-400 whitespace-nowrap"></span>
+        <button id="btn-refresh" class="icon-btn" title="Actualizar">
+          <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36" stroke-linecap="round"/><path d="M21 3v6h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content-inner">
+
+        <!-- Vista: Resumen -->
+        <section id="view-resumen">
+          <div id="resumen-kpi-grid" class="kpi-grid mb-8"></div>
+
+          <div class="flex items-end justify-between gap-3 flex-wrap mb-3">
+            <div>
+              <p class="text-[10.5px] font-bold uppercase tracking-wide text-slate-400">Cola de trabajo</p>
+              <h3 class="text-base font-bold text-slate-900 mt-0.5">Próximos productos por completar</h3>
+            </div>
+            <span id="queue-note" class="text-xs text-slate-400"></span>
+          </div>
+
+          <div id="queue-empty" class="hidden py-14 text-center text-sm text-slate-400 bg-white border border-slate-200 rounded-xl"></div>
+
+          <div id="queue-wrap" class="queue-wrap">
+            <div class="queue-scroll">
+              <table class="queue">
+                <thead>
+                  <tr><th>Producto</th><th>Precio</th><th>Pendiente en</th><th></th></tr>
+                </thead>
+                <tbody id="queue-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista: Catálogo por agregador -->
+        <section id="view-catalog" class="hidden">
+          <div id="banner-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+
+          <!-- Selector de marca: obligatorio antes de listar productos. En esta POC
+               todas las marcas comparten el mismo servicio de Oracle Simphony; cuando
+               cada marca tenga su propia conexión, este selector es el punto donde se
+               debe invocar el servicio correspondiente (ver backend/app.py get_menu). -->
+          <div class="catalog-marca-bar">
+            <label for="catalog-marca-select" class="catalog-marca-label">Marca</label>
+            <select id="catalog-marca-select" class="cfg-input catalog-marca-select">
+              <option value="">Selecciona una marca…</option>
+            </select>
+            <span id="catalog-marca-hint" class="catalog-marca-hint"></span>
+          </div>
+
+          <div id="catalog-marca-empty" class="catalog-marca-empty">
+            <svg class="w-8 h-8 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-3H5a2 2 0 0 0-2 3Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-medium text-slate-600 mt-3">Selecciona una marca para ver su catálogo</p>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">Cada marca podrá tener su propio catálogo cuando se conecte un servicio independiente. Por ahora, todas usan el mismo catálogo de Oracle Simphony.</p>
+          </div>
+
+          <div id="catalog-content" class="hidden">
+            <nav id="catalog-subview-tabs" class="segmented mb-4">
+              <button type="button" data-subview="productos" class="active">Productos del agregador</button>
+              <button type="button" data-subview="carta">Previsualizar carta</button>
+            </nav>
+
+            <!-- Sub-vista: Productos del agregador (igual que antes) -->
+            <div id="catalog-subview-productos">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                <div class="relative flex-1 max-w-md">
+                  <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
+                  <input id="search" type="text" placeholder="Buscar producto o código…"
+                    class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                </div>
+                <span id="result-count" class="text-xs font-medium text-slate-700"></span>
+              </div>
+
+              <nav id="status-tabs" class="segmented mb-4"></nav>
+
+              <div id="loading" class="hidden py-20 text-center text-sm text-slate-400">Cargando menú desde STS…</div>
+              <div id="empty" class="hidden py-20 text-center text-sm text-slate-400">No hay productos para este agregador con la configuración actual.</div>
+
+              <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Sub-vista: Previsualizar carta (simula el menú del cliente, con navegación
+                 por categoría a la izquierda y las secciones reales a la derecha) -->
+            <div id="catalog-subview-carta" class="hidden">
+              <div id="carta-sin-categorias" class="hidden py-16 text-center text-sm text-slate-400">Esta marca todavía no tiene categorías activas para <span id="carta-sin-categorias-agg" class="font-medium"></span>. Créalas en el maestro de <strong>Categorías</strong>.</div>
+
+              <div id="carta-preview" class="carta-preview">
+                <aside class="carta-preview-nav">
+                  <div class="carta-preview-identity">
+                    <div class="carta-preview-cover">
+                      <span id="carta-preview-badge" class="carta-preview-badge"></span>
+                    </div>
+                    <h3 id="carta-preview-marca" class="carta-preview-marca"></h3>
+                    <p id="carta-preview-agg" class="carta-preview-agg"></p>
+                  </div>
+                  <div class="carta-preview-stats">
+                    <div class="carta-preview-stat">
+                      <span>Categorías</span>
+                      <strong id="carta-stat-categorias">0</strong>
+                    </div>
+                    <div class="carta-preview-stat">
+                      <span>Productos en la carta</span>
+                      <strong id="carta-stat-productos">0</strong>
+                    </div>
+                    <div class="carta-preview-stat">
+                      <span>Sin ubicar</span>
+                      <strong id="carta-stat-pendientes">0</strong>
+                    </div>
+                  </div>
+                  <p class="carta-preview-hint">Arrastra las tarjetas para ordenarlas o moverlas de categoría.</p>
+                  <nav id="carta-nav-list" class="carta-nav-list"></nav>
+                </aside>
+
+                <div id="carta-preview-scroll" class="carta-preview-scroll">
+                  <div id="carta-sections"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista: Maestro de preguntas -->
+        <section id="view-preguntas" class="hidden max-w-4xl mx-auto">
+          <div class="mb-1">
+            <h2 class="text-sm font-semibold">Maestro de preguntas</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Nombre tal como está en Oracle Simphony, con la pregunta comercial equivalente para mostrar al cliente.</p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 my-4">
+            <div class="relative flex-1 max-w-md">
+              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
+              <input id="preguntas-search" type="text" placeholder="Buscar pregunta…"
+                class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
+            </div>
+            <span id="preguntas-count" class="text-xs text-slate-500"></span>
+          </div>
+
+          <div id="preguntas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+          <div id="preguntas-loading" class="hidden py-16 text-center text-sm text-slate-400">Cargando preguntas…</div>
+          <div id="preguntas-empty" class="hidden py-16 text-center text-sm text-slate-400">No se encontraron preguntas.</div>
+
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm min-w-[560px]">
+                <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                  <tr>
+                    <th class="text-left px-4 py-2.5 font-medium w-24">Código</th>
+                    <th class="text-left px-4 py-2.5 font-medium">Pregunta en Oracle Simphony</th>
+                    <th class="text-left px-4 py-2.5 font-medium">Pregunta comercial</th>
+                  </tr>
+                </thead>
+                <tbody id="preguntas-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista: Maestro de categorías -->
+        <section id="view-categorias" class="hidden max-w-6xl mx-auto">
+          <div class="mb-1 flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 class="text-sm font-semibold">Maestro de categorías y subcategorías</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Por marca y agregador — agrega, edita o desactiva categorías.</p>
+            </div>
+            <button id="btn-nueva-categoria" class="text-xs font-medium px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700 transition whitespace-nowrap">+ Nueva categoría</button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 my-4">
+            <select id="filtro-marca" class="cfg-input text-xs !py-1.5"><option value="">Todas las marcas</option></select>
+            <select id="filtro-agregador" class="cfg-input text-xs !py-1.5"><option value="">Todos los agregadores</option></select>
+          </div>
+
+          <!-- Form alta de categoría -->
+          <form id="form-categoria" class="hidden bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+            <label class="flex flex-col gap-1 sm:col-span-2">
+              <span class="text-xs font-medium text-slate-500">Nombre de la categoría</span>
+              <input name="nombre" required class="cfg-input" />
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-slate-500">Marca</span>
+              <input name="marca" required list="marcas-datalist" class="cfg-input" placeholder="Ej. Popeyes" />
+              <datalist id="marcas-datalist"></datalist>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-slate-500">Agregador</span>
+              <select name="agregador" required class="cfg-input"></select>
+            </label>
+            <div class="sm:col-span-4 flex justify-end gap-2 pt-1">
+              <button type="button" id="btn-cancelar-categoria" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
+              <button type="submit" class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700">Guardar categoría</button>
+            </div>
+          </form>
+
+          <div id="categorias-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+          <div id="categorias-empty" class="hidden py-16 text-center text-sm text-slate-400">No hay categorías registradas todavía.</div>
+
+          <div id="categorias-list" class="space-y-3"></div>
+        </section>
+
+        <!-- Vista: Maestro de cartas por agregador -->
+        <section id="view-cartas" class="hidden max-w-6xl mx-auto">
+          <div class="mb-1 flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h2 class="text-sm font-semibold">Maestro de cartas por agregador</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Por marca y agregador — agrupa un subconjunto del catálogo y marca qué productos se pueden integrar en cada carta.</p>
+            </div>
+            <button id="btn-nueva-carta" class="text-xs font-medium px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700 transition whitespace-nowrap">+ Nueva carta</button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 my-4">
+            <input id="filtro-carta-busqueda" type="text" placeholder="Buscar carta por nombre…" class="cfg-input text-xs !py-1.5 w-56" />
+            <select id="filtro-carta-marca" class="cfg-input text-xs !py-1.5"><option value="">Todas las marcas</option></select>
+            <select id="filtro-carta-agregador" class="cfg-input text-xs !py-1.5"><option value="">Todos los agregadores</option></select>
+          </div>
+
+          <!-- Form alta de carta -->
+          <form id="form-carta" class="hidden bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+            <label class="flex flex-col gap-1 sm:col-span-2">
+              <span class="text-xs font-medium text-slate-500">Nombre de la carta</span>
+              <input name="nombre" required class="cfg-input" placeholder="Ej. Carta Verano 2026" />
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-slate-500">Marca</span>
+              <input name="marca" required list="marcas-datalist" class="cfg-input" placeholder="Ej. Popeyes" />
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-slate-500">Agregador</span>
+              <select name="agregador" required class="cfg-input"></select>
+            </label>
+            <div class="sm:col-span-4 flex justify-end gap-2 pt-1">
+              <button type="button" id="btn-cancelar-carta" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
+              <button type="submit" class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700">Guardar carta</button>
+            </div>
+          </form>
+
+          <div id="cartas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+          <div id="cartas-empty" class="hidden py-16 text-center text-sm text-slate-400"></div>
+
+          <div id="cartas-list" class="space-y-3"></div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de configuración de conexión -->
+<div id="config-overlay" class="hidden fixed inset-0 z-40 bg-slate-900/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-semibold text-sm">Conexión Oracle STS</h2>
+      <button id="btn-close-config" class="text-slate-400 hover:text-slate-700">&times;</button>
+    </div>
+    <form id="config-form" class="px-5 py-4 space-y-3 text-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <label class="col-span-2 flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Base URL</span>
+          <input name="base_url" class="cfg-input" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Org</span>
+          <input name="org" class="cfg-input" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Org Short Name</span>
+          <input name="org_short_name" class="cfg-input" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">env_locRef</span>
+          <input name="env_locRef" class="cfg-input" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">locRef</span>
+          <input name="locRef" class="cfg-input" />
+        </label>
+        <label class="col-span-2 flex flex-col gap-1">
+          <span class="text-xs font-medium text-slate-500">Token (Bearer)</span>
+          <input name="token" placeholder="Pega el nuevo token aquí para reemplazarlo" class="cfg-input font-mono text-xs" />
+        </label>
+      </div>
+      <div id="config-feedback" class="text-xs hidden"></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="btn-cancel-config" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
+        <button type="submit" class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700">Guardar y reconectar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Template de tarjeta -->
+<template id="tpl-card">
+  <article class="product-card bg-white rounded-xl border border-slate-200 hover:shadow-md transition overflow-hidden">
+    <div class="p-4">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="type-badge"></span>
+          <span class="estado-badge type-badge"></span>
+          <span class="estado-alerta-dot hidden" title=""></span>
+          <h3 class="product-name font-medium text-sm mt-1.5 leading-snug"></h3>
+        </div>
+        <span class="product-price whitespace-nowrap text-sm font-semibold text-slate-900"></span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button class="btn-preview text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/></svg>
+          Vista previa
+        </button>
+        <button class="btn-preview-v2 text-xs font-medium text-indigo-500 hover:text-indigo-700 flex items-center gap-1" title="Editor de pantalla completa (en prueba)">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18" stroke-linecap="round"/></svg>
+          Vista previa 2
+        </button>
+        <button class="toggle-details hidden text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">
+          <svg class="w-3 h-3 chevron transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="toggle-label"></span>
+        </button>
+      </div>
+    </div>
+    <div class="details hidden border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs space-y-2"></div>
+  </article>
+</template>
+
+<!-- Template de fila de pregunta -->
+<template id="tpl-pregunta-row">
+  <tr>
+    <td class="px-4 py-2.5 text-xs text-slate-400 font-mono pregunta-code"></td>
+    <td class="px-4 py-2.5 text-slate-600 pregunta-oracle"></td>
+    <td class="px-4 py-2.5">
+      <div class="flex flex-col gap-1.5">
+        <input type="text" class="cfg-input pregunta-comercial-input w-full" placeholder="Escribe la pregunta comercial…" />
+        <div class="pregunta-actions hidden flex items-center gap-2">
+          <button type="button" class="btn-mini btn-mini-primary btn-guardar-pregunta">Guardar</button>
+          <button type="button" class="btn-mini btn-mini-ghost btn-cancelar-pregunta">Cancelar</button>
+          <span class="pregunta-msg text-xs font-medium hidden"></span>
+        </div>
+      </div>
+    </td>
+  </tr>
+</template>
+
+<!-- Template de tarjeta de categoría -->
+<template id="tpl-categoria-card">
+  <article class="categoria-card bg-white rounded-xl border border-slate-200 p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="carta-row-order categoria-order-buttons" title="Orden dentro de esta marca y agregador">
+        <button type="button" class="btn-categoria-up" title="Subir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 15 7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="categoria-codigo text-[11px] font-semibold text-slate-400 text-center"></span>
+        <button type="button" class="btn-categoria-down" title="Bajar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 9 7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="agregador-badge type-badge"></span>
+          <span class="marca-badge text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"></span>
+          <span class="inactivo-badge hidden text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Inactiva</span>
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+          <h3 class="categoria-nombre font-medium text-sm"></h3>
+          <input type="text" class="categoria-nombre-input hidden cfg-input text-sm py-1" />
+          <button class="btn-editar-nombre text-slate-400 hover:text-slate-700" title="Editar nombre">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <label class="toggle-switch shrink-0">
+        <input type="checkbox" class="toggle-activo" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="mt-3 pt-3 border-t border-slate-100">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-500">Subcategorías</span>
+        <button class="btn-add-sub text-xs font-medium text-slate-500 hover:text-slate-800">+ Agregar</button>
+      </div>
+      <div class="subcategorias-list space-y-1.5"></div>
+    </div>
+  </article>
+</template>
+
+<!-- Template de tarjeta de carta (maestro de cartas por agregador) -->
+<template id="tpl-carta-card">
+  <article class="categoria-card bg-white rounded-xl border border-slate-200 p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="agregador-badge type-badge"></span>
+          <span class="marca-badge text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"></span>
+          <span class="inactivo-badge hidden text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Inactiva</span>
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+          <h3 class="carta-nombre font-medium text-sm"></h3>
+          <input type="text" class="carta-nombre-input hidden cfg-input text-sm py-1" />
+          <button class="btn-editar-carta-nombre text-slate-400 hover:text-slate-700" title="Editar nombre">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <p class="carta-productos-resumen text-xs text-slate-400 mt-1"></p>
+      </div>
+      <label class="toggle-switch shrink-0">
+        <input type="checkbox" class="toggle-activo" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="mt-3 pt-3 border-t border-slate-100">
+      <button type="button" class="btn-ver-catalogo-carta text-xs font-medium px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+        Ver catálogo
+      </button>
+    </div>
+  </article>
+</template>
+
+<!-- Modal: catálogo completo del agregador de una carta (ver / asociar productos) -->
+<div id="carta-catalogo-overlay" class="hidden fixed inset-0 z-40 bg-slate-900/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+      <div>
+        <h2 class="font-semibold text-sm">Catálogo de la carta</h2>
+        <p id="carta-catalogo-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
+      </div>
+      <button id="btn-close-carta-catalogo" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+    </div>
+    <div class="carta-catalogo-toolbar px-5 py-3 border-b border-slate-100 shrink-0">
+      <input id="carta-catalogo-search" type="text" placeholder="Buscar producto o código…"
+        class="flex-1 min-w-[10rem] pl-3 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
+      <div class="carta-catalogo-tabs" role="tablist">
+        <button type="button" class="carta-catalogo-tab active" data-filter="todos">Todos</button>
+        <button type="button" class="carta-catalogo-tab" data-filter="asociados">Asociados</button>
+        <button type="button" class="carta-catalogo-tab" data-filter="no-asociados">No asociados</button>
+      </div>
+    </div>
+    <p id="carta-catalogo-count" class="px-5 pt-3 text-xs text-slate-400 shrink-0"></p>
+    <div id="carta-catalogo-error" class="hidden mx-5 mt-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 shrink-0"></div>
+    <div id="carta-catalogo-loading" class="hidden py-10 text-center text-sm text-slate-400 shrink-0">Cargando catálogo del agregador…</div>
+    <div id="carta-catalogo-empty" class="hidden py-10 text-center text-sm text-slate-400 shrink-0">No hay productos que coincidan.</div>
+    <div id="carta-catalogo-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 px-5 mt-1"></div>
+    <div class="px-5 py-3 border-t border-slate-100 shrink-0 bg-white flex justify-end">
+      <button type="button" id="btn-cerrar-carta-catalogo" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Template de fila de producto dentro del modal de catálogo de una carta -->
+<template id="tpl-carta-catalogo-row">
+  <div class="carta-catalogo-row flex items-center gap-3 py-2 text-sm">
+    <button type="button" class="carta-catalogo-check shrink-0" title="Asociar a esta carta"></button>
+    <span class="flex-1 min-w-0">
+      <span class="carta-producto-nombre block font-medium text-slate-700 truncate"></span>
+      <span class="carta-producto-code block text-xs text-slate-400 font-mono"></span>
+    </span>
+    <span class="carta-producto-price text-xs text-slate-500 whitespace-nowrap"></span>
+    <button type="button" class="carta-catalogo-integrable-btn type-badge" title="Puede integrarse dentro de esta carta — clic para alternar"></button>
+  </div>
+</template>
+
+<!-- Modal de edición de producto (Vista previa) -->
+<div id="preview-overlay" class="hidden fixed inset-0 z-40 bg-slate-900/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <div class="px-6 pt-5 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+      <div>
+        <p class="text-xs text-slate-400 mb-1">Editar producto</p>
+        <span id="preview-type-badge" class="type-badge"></span>
+        <h2 id="preview-title" class="font-bold text-lg mt-1 leading-tight"></h2>
+        <p class="text-xs text-slate-400 mt-1 mb-3">Código Oracle: <span id="preview-code" class="font-mono"></span></p>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <button id="btn-close-preview" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+    </div>
+
+    <!-- Estado del producto: progreso + alertas + acciones de integración -->
+    <div id="preview-estado-panel" class="hidden estado-panel">
+      <span id="preview-estado-pill" class="estado-pill"></span>
+      <span id="preview-estado-alerta-sts" class="hidden estado-alerta warn">
+        Oracle STS reportó un cambio en este producto
+        <button type="button" id="preview-btn-confirmar-sts" class="estado-alerta-btn">Confirmar</button>
+      </span>
+      <span id="preview-estado-alerta-republicar" class="hidden estado-alerta info">Hay cambios sin publicar en el agregador</span>
+      <span class="estado-panel-spacer"></span>
+      <button type="button" id="preview-btn-integrar" class="estado-btn-integrar"></button>
+      <button type="button" id="preview-btn-desintegrar" class="hidden estado-btn-desintegrar">Desmarcar integración</button>
+    </div>
+
+    <!-- Cartas del agregador activo a las que pertenece el producto -->
+    <div id="preview-cartas-panel" class="hidden cartas-panel"></div>
+
+    <!-- Tabs internas -->
+    <nav id="preview-modal-tabs" class="px-6 flex items-center gap-5 border-b border-slate-100 overflow-x-auto shrink-0"></nav>
+
+    <div id="preview-error" class="hidden mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 shrink-0"></div>
+    <div id="preview-loading" class="hidden py-16 text-center text-sm text-slate-400">Cargando producto…</div>
+
+    <!-- Body -->
+    <div id="preview-body" class="hidden flex-1 min-h-0 overflow-y-auto px-6 py-5">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+
+        <!-- Columna izquierda: formulario por pestaña -->
+        <div id="preview-tab-panels" class="min-w-0">
+          <div class="preview-tab-panel space-y-5" data-tab="general"></div>
+          <div class="preview-tab-panel hidden space-y-5" data-tab="precios"></div>
+          <div class="preview-tab-panel hidden space-y-5" data-tab="opciones"></div>
+          <div class="preview-tab-panel hidden space-y-5" data-tab="agregadores"></div>
+          <div class="preview-tab-panel hidden space-y-5" data-tab="imagenes"></div>
+        </div>
+
+        <!-- Columna derecha: vista previa -->
+        <div class="lg:sticky lg:top-0">
+          <div class="flex items-center justify-between mb-3">
+            <p id="preview-mockup-title" class="text-xs font-semibold text-slate-600"></p>
+            <div id="preview-device-toggle" class="flex items-center gap-1 border border-slate-200 rounded-lg p-0.5"></div>
+          </div>
+          <div id="preview-mockup-card" class="rounded-xl border border-slate-200 overflow-hidden bg-white mx-auto transition-all" style="max-width: 20rem;">
+            <div id="preview-mockup-image" class="h-40 bg-slate-100 grid place-items-center text-slate-300 text-xs px-2 text-center">Sin imagen</div>
+            <div class="p-4">
+              <p id="preview-mockup-name" class="text-sm font-semibold leading-snug"></p>
+              <p id="preview-mockup-desc" class="text-xs text-slate-500 mt-1 leading-snug"></p>
+              <p id="preview-mockup-price" class="text-base font-bold text-slate-900 mt-2"></p>
+              <div id="preview-mockup-includes-wrap" class="hidden mt-3 pt-3 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-600 mb-1.5" id="preview-mockup-includes-title">Incluye</p>
+                <ul id="preview-mockup-includes" class="text-xs text-slate-500 space-y-1"></ul>
+              </div>
+              <button id="preview-mockup-cta" type="button" class="w-full mt-4 py-2.5 rounded-lg text-sm font-semibold text-white">Agregar</button>
+              <button id="preview-mockup-details" type="button" class="w-full mt-2 text-xs text-center text-blue-600 hover:underline">Ver detalles del producto</button>
+            </div>
+          </div>
+          <div class="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 flex items-start gap-2">
+            <svg class="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="text-[11px] text-slate-500 leading-snug"><span class="font-semibold text-slate-600">Esta vista es referencial.</span> El producto puede verse distinto en el agregador.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-3.5 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 bg-white">
+      <div class="text-xs">
+        <span id="preview-save-message" class="hidden font-medium"></span>
+        <span id="preview-footer-help" class="text-slate-400">Los cambios se guardan al hacer clic en Guardar cambios.</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="btn-cancel-preview" class="px-4 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
+        <button type="button" id="btn-save-preview" class="px-4 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed" disabled>Guardar cambios</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Vista previa 2 (en prueba): editor de producto a pantalla completa, un solo formulario -->
+<div id="preview-overlay-v2" class="hidden fixed inset-0 z-40 bg-white flex flex-col">
+
+  <!-- Barra superior: fija, siempre visible -->
+  <div class="editor-topbar">
+    <div class="editor-topbar-left">
+      <button id="v2-btn-close" class="editor-back-btn" title="Volver" aria-label="Volver">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span id="v2-type-badge" class="type-badge"></span>
+          <span class="text-xs text-slate-400">Código Oracle: <span id="v2-code" class="font-mono"></span></span>
+        </div>
+        <h2 id="v2-title" class="font-bold text-base leading-tight mt-0.5 truncate"></h2>
+      </div>
+    </div>
+    <div class="editor-topbar-right">
+      <span id="v2-save-message" class="hidden text-sm font-medium"></span>
+      <span id="v2-footer-help" class="hidden sm:inline text-xs text-slate-400">Los cambios se guardan al hacer clic en Guardar cambios.</span>
+      <button type="button" id="v2-btn-cancel" class="editor-btn-secondary">Cancelar</button>
+      <button type="button" id="v2-btn-save" class="editor-btn-primary" disabled>Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- Estado del producto: progreso + alertas + acciones de integración -->
+  <div id="v2-estado-panel" class="hidden estado-panel estado-panel-v2">
+    <span id="v2-estado-pill" class="estado-pill"></span>
+    <span id="v2-estado-alerta-sts" class="hidden estado-alerta warn">
+      Oracle STS reportó un cambio en este producto
+      <button type="button" id="v2-btn-confirmar-sts" class="estado-alerta-btn">Confirmar</button>
+    </span>
+    <span id="v2-estado-alerta-republicar" class="hidden estado-alerta info">Hay cambios sin publicar en el agregador</span>
+    <span class="estado-panel-spacer"></span>
+    <button type="button" id="v2-btn-integrar" class="estado-btn-integrar"></button>
+    <button type="button" id="v2-btn-desintegrar" class="hidden estado-btn-desintegrar">Desmarcar integración</button>
+  </div>
+
+  <!-- Cartas del agregador activo a las que pertenece el producto -->
+  <div id="v2-cartas-panel" class="hidden cartas-panel"></div>
+
+  <div id="v2-error" class="hidden mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 shrink-0"></div>
+  <div id="v2-loading" class="hidden flex-1 grid place-items-center text-sm text-slate-400">Cargando producto…</div>
+
+  <!-- Cuerpo: formulario (izquierda) + vista previa y contexto (derecha) -->
+  <div id="v2-body" class="hidden flex-1 min-h-0">
+    <div class="editor-grid">
+
+      <!-- Columna izquierda: un solo formulario, sin pestañas -->
+      <div class="editor-form-col">
+        <div id="v2-agg-selector" class="editor-agg-selector"></div>
+        <div id="v2-form-sections" class="space-y-4"></div>
+      </div>
+
+      <!-- Columna derecha: contexto de solo lectura del producto -->
+      <div class="editor-side-col">
+        <details class="editor-accordion" open>
+          <summary>Publicado en <span id="v2-agg-count" class="editor-accordion-count"></span></summary>
+          <div id="v2-agregadores-panel" class="editor-accordion-body"></div>
+        </details>
+
+        <details class="editor-accordion" open>
+          <summary>Opciones / Preguntas <span id="v2-opciones-count-badge" class="editor-accordion-count"></span></summary>
+          <div id="v2-opciones-panel" class="editor-accordion-body"></div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Template de fila de subcategoría -->
+<template id="tpl-subcategoria-row">
+  <div class="subcategoria-row flex items-center gap-2 text-sm">
+    <label class="toggle-switch toggle-switch-sm shrink-0">
+      <input type="checkbox" class="toggle-activo-sub" />
+      <span class="toggle-slider"></span>
+    </label>
+    <span class="sub-nombre flex-1 text-slate-600"></span>
+    <input type="text" class="sub-nombre-input hidden cfg-input text-xs py-1 flex-1" />
+    <button class="btn-editar-sub text-slate-400 hover:text-slate-700" title="Editar">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9" stroke-linecap="round"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</template>
+
+<!-- Template de fila de cola de pendientes (Resumen) -->
+<template id="tpl-queue-row">
+  <tr>
+    <td>
+      <div class="q-product">
+        <span class="q-name"></span>
+        <span class="q-code"></span>
+      </div>
+    </td>
+    <td class="q-price"></td>
+    <td><div class="q-chips"></div></td>
+    <td>
+      <div class="flex items-center gap-3 justify-end">
+        <button type="button" class="q-action-v2 text-xs font-medium text-indigo-500 hover:text-indigo-700" title="Editor de pantalla completa (en prueba)">v2</button>
+        <button type="button" class="q-action">
+          Completar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </td>
+  </tr>
+</template>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "nombre": "Carta Verano 2026",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "productos": [
+      {
+        "code": "2030603",
+        "integrable": true
+      },
+      {
+        "code": "2030604",
+        "integrable": false
+      },
+      {
+        "code": "2030606",
+        "integrable": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "nombre": "Carta Fin de Semana",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "productos": [
+      {
+        "code": "2030606",
+        "integrable": true
+      },
+      {
+        "code": "2030651",
+        "integrable": true
+      }
+    ]
+  }
+]

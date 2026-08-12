@@ -1,0 +1,79 @@
+{
+  "2030600": {
+    "RAPPI": {
+      "PrecioPadre": "34.9",
+      "Menu": " (editado) (editado)",
+      "CodigoCategoria": "",
+      "ProductoPadre": "Nombre editado post-integracion",
+      "Collection": "Tenders",
+      "OrderPos": 7
+    },
+    "DIDI": {
+      "Menu": "e",
+      "CodigoCategoria": "44"
+    }
+  },
+  "2030624": {
+    "RAPPI": {
+      "DescripcionProductoPadre": "Combo especial de 2 piezas de pollo frito Popeyes."
+    }
+  },
+  "2030629": {
+    "RAPPI": {
+      "DescripcionProductoPadre": "Prueba sin mockup"
+    }
+  },
+  "2030601": {
+    "RAPPI": {
+      "Menu": "POPEYES",
+      "CodigoCategoria": "2",
+      "Collection": "SDFF",
+      "OrderPos": "2",
+      "ProdPos": "2",
+      "PrecioPadreFull": "11",
+      "VigenciaFechaInicio": "2026-08-11",
+      "VigenciaFechaFin": "2026-08-20",
+      "DescripcionProductoPadre": "SADSDASD",
+      "Imagen": "ASDASDASD"
+    }
+  },
+  "2030604": {
+    "RAPPI": {
+      "Collection": "Pollo Frito"
+    },
+    "PEYA_PRODUCTOS": {
+      "Seccion": "Tenders",
+      "SKUSeccion": "Tenders",
+      "SKUNameSeccion": "Tenders"
+    }
+  },
+  "2030637": {
+    "PEYA_PRODUCTOS": {
+      "Collection": "Tenders",
+      "Seccion": "Tenders",
+      "SKUSeccion": "Tenders",
+      "SKUNameSeccion": "Tenders"
+    }
+  },
+  "2030605": {
+    "RAPPI": {
+      "Collection": "Nuggets",
+      "OrderPos": 9
+    }
+  },
+  "2030602": {
+    "RAPPI": {
+      "ProdPos": 1
+    }
+  },
+  "2030688": {
+    "RAPPI": {
+      "ProdPos": 2
+    }
+  },
+  "2030606": {
+    "RAPPI": {
+      "CodigoCategoria": ""
+    }
+  }
+}

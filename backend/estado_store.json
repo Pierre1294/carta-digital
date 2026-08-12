@@ -1,0 +1,30 @@
+{
+  "2030600": {
+    "RAPPI": {
+      "integrado": true,
+      "integradoEn": "2026-08-11T16:14:23",
+      "stsSnapshot": {
+        "name": "A Martes de popeyes",
+        "price": 34.9,
+        "type": "COMBO",
+        "preguntas": [
+          "1066",
+          "1123",
+          "1124",
+          "1125",
+          "506"
+        ]
+      },
+      "integracionSnapshot": {
+        "campos": {
+          "PrecioPadre": "34.9",
+          "Menu": " (editado) (editado)",
+          "CodigoCategoria": "",
+          "ProductoPadre": "Nombre editado post-integracion"
+        },
+        "preguntasOrden": [],
+        "cartaPos": null
+      }
+    }
+  }
+}
