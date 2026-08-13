@@ -211,17 +211,36 @@
     tplCartaCard: document.getElementById("tpl-carta-card"),
     tplCartaCatalogoRow: document.getElementById("tpl-carta-catalogo-row"),
 
-    cartaCatalogoOverlay: document.getElementById("carta-catalogo-overlay"),
-    cartaCatalogoSubtitle: document.getElementById("carta-catalogo-subtitle"),
-    cartaCatalogoSearch: document.getElementById("carta-catalogo-search"),
-    cartaCatalogoTabs: document.querySelectorAll("#carta-catalogo-overlay .carta-catalogo-tab"),
-    cartaCatalogoCount: document.getElementById("carta-catalogo-count"),
-    cartaCatalogoError: document.getElementById("carta-catalogo-error"),
-    cartaCatalogoLoading: document.getElementById("carta-catalogo-loading"),
-    cartaCatalogoEmpty: document.getElementById("carta-catalogo-empty"),
-    cartaCatalogoList: document.getElementById("carta-catalogo-list"),
-    btnCloseCartaCatalogo: document.getElementById("btn-close-carta-catalogo"),
-    btnCerrarCartaCatalogo: document.getElementById("btn-cerrar-carta-catalogo"),
+    cartasSubviewTabs: document.getElementById("cartas-subview-tabs"),
+    cartasSubviewMaestros: document.getElementById("cartas-subview-maestros"),
+    cartasSubviewAsociar: document.getElementById("cartas-subview-asociar"),
+    cartasSubviewPrevisualizar: document.getElementById("cartas-subview-previsualizar"),
+
+    asociarCartaSelect: document.getElementById("asociar-carta-select"),
+    asociarSinCarta: document.getElementById("asociar-sin-carta"),
+    asociarPanel: document.getElementById("asociar-panel"),
+    asociarSubtitle: document.getElementById("asociar-subtitle"),
+    asociarSearch: document.getElementById("asociar-search"),
+    asociarTabs: document.querySelectorAll("#cartas-subview-asociar .carta-catalogo-tab"),
+    asociarCount: document.getElementById("asociar-count"),
+    asociarError: document.getElementById("asociar-error"),
+    asociarLoading: document.getElementById("asociar-loading"),
+    asociarEmpty: document.getElementById("asociar-empty"),
+    asociarList: document.getElementById("asociar-list"),
+
+    preview2CartaSelect: document.getElementById("preview2-carta-select"),
+    preview2SinCarta: document.getElementById("preview2-sin-carta"),
+    preview2SinProductos: document.getElementById("preview2-sin-productos"),
+    preview2: document.getElementById("preview2"),
+    preview2Badge: document.getElementById("preview2-badge"),
+    preview2Nombre: document.getElementById("preview2-nombre"),
+    preview2Agg: document.getElementById("preview2-agg"),
+    preview2StatCategorias: document.getElementById("preview2-stat-categorias"),
+    preview2StatProductos: document.getElementById("preview2-stat-productos"),
+    preview2StatPendientes: document.getElementById("preview2-stat-pendientes"),
+    preview2NavList: document.getElementById("preview2-nav-list"),
+    preview2Scroll: document.getElementById("preview2-scroll"),
+    preview2Sections: document.getElementById("preview2-sections"),
 
     previewOverlay: document.getElementById("preview-overlay"),
     previewTypeBadge: document.getElementById("preview-type-badge"),
@@ -315,9 +334,14 @@
     cartasMaestro: [],
     cartasMaestroLoaded: false,
     catalogPorAgregador: {}, // {AGREGADOR: [productos...]} cache para nombre/precio en el maestro de cartas
-    // Modal "Catálogo de la carta": carta abierta + catálogo completo del
+    cartasSubview: "maestros", // "maestros" | "asociar" | "previsualizar" (vista "Cartas por agregador")
+    // Sub-vista "Asociar productos": carta elegida + catálogo completo del
     // agregador + filtro por tab (todos/asociados/no-asociados) activo.
-    cartaCatalogoModal: { carta: null, catalogo: null, filtro: "todos" },
+    asociarCarta: { carta: null, catalogo: null, filtro: "todos" },
+    // Sub-vista "Previsualizar": carta elegida + campos guardados (nombre/
+    // descripción/precio/imagen) cacheados por agregador de campos (fieldAgg).
+    previewCarta: { carta: null },
+    previewCampos: {}, // {fieldAgg: {codigo_producto: {campo: valor}}}
     marcas: [],
     selectedMarca: "", // marca elegida en el catálogo por agregador; obligatoria antes de listar productos
     catalogSubview: "productos", // "productos" | "carta"
@@ -1400,6 +1424,9 @@
         // cartas del editor de producto mientras se estaba en otra vista.
         renderCartasMaestro();
       }
+      await ensureCategoriasData();
+      populateCartaSelect(els.asociarCartaSelect);
+      populateCartaSelect(els.preview2CartaSelect);
     }
   }
 
@@ -1886,6 +1913,8 @@
       state.cartasMaestroLoaded = true;
       updateMarcasOptions();
       renderCartasMaestro();
+      populateCartaSelect(els.asociarCartaSelect);
+      populateCartaSelect(els.preview2CartaSelect);
     } catch (err) {
       els.cartasError.textContent = err.message;
       els.cartasError.classList.remove("hidden");
@@ -1934,7 +1963,8 @@
     const btnEditarNombre = node.querySelector(".btn-editar-carta-nombre");
     const toggleActivo = node.querySelector(".toggle-activo");
     const resumenEl = node.querySelector(".carta-productos-resumen");
-    const btnVerCatalogo = node.querySelector(".btn-ver-catalogo-carta");
+    const btnAsociar = node.querySelector(".btn-asociar-carta");
+    const btnPrevisualizar = node.querySelector(".btn-previsualizar-carta");
 
     const meta = AGGREGATOR_META[carta.agregador] || { label: carta.agregador, color: "#0f172a" };
     agBadge.textContent = meta.label;
@@ -1995,48 +2025,128 @@
       if (e.key === "Enter") { e.preventDefault(); nombreInput.blur(); }
     });
 
-    btnVerCatalogo.addEventListener("click", () => openCartaCatalogoModal(carta));
+    btnAsociar.addEventListener("click", () => {
+      switchCartasSubview("asociar");
+      populateCartaSelect(els.asociarCartaSelect, carta.id);
+      selectAsociarCarta(carta);
+    });
+    btnPrevisualizar.addEventListener("click", () => {
+      switchCartasSubview("previsualizar");
+      populateCartaSelect(els.preview2CartaSelect, carta.id);
+      selectPreviewCarta(carta);
+    });
 
     return article;
   }
 
-  // ---- Modal "Catálogo de la carta": catálogo completo del agregador,
-  // con búsqueda, filtro por asociación y toggle de asociación/integrable
-  // en línea (persiste de inmediato, sin paso de "Guardar" aparte). ---- //
-  async function openCartaCatalogoModal(carta) {
-    state.cartaCatalogoModal = { carta, catalogo: null, filtro: "todos" };
-    els.cartaCatalogoSearch.value = "";
-    const meta = AGGREGATOR_META[carta.agregador] || { label: carta.agregador };
-    els.cartaCatalogoSubtitle.textContent = `${carta.nombre} · ${carta.marca} · ${meta.label}`;
-    els.cartaCatalogoTabs.forEach((t) => t.classList.toggle("active", t.dataset.filter === "todos"));
-    els.cartaCatalogoError.classList.add("hidden");
-    els.cartaCatalogoEmpty.classList.add("hidden");
-    els.cartaCatalogoList.innerHTML = "";
-    els.cartaCatalogoCount.textContent = "";
-    els.cartaCatalogoLoading.classList.remove("hidden");
-    els.cartaCatalogoOverlay.classList.remove("hidden");
+  // ------------------------------------------------------------------ //
+  // Sub-vistas de "Cartas por agregador": Maestros / Asociar productos /
+  // Previsualizar. Los combos de carta de las dos últimas comparten el
+  // mismo listado (state.cartasMaestro) via populateCartaSelect.
+  // ------------------------------------------------------------------ //
+  function populateCartaSelect(selectEl, selectedId) {
+    const actual = selectedId !== undefined && selectedId !== null ? String(selectedId) : selectEl.value;
+    const cartas = [...state.cartasMaestro].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    selectEl.innerHTML = `<option value="">Selecciona una carta…</option>` + cartas.map((c) => {
+      const meta = AGGREGATOR_META[c.agregador] || { label: c.agregador };
+      return `<option value="${c.id}">${c.nombre.replace(/</g, "&lt;")} · ${c.marca.replace(/</g, "&lt;")} · ${meta.label}</option>`;
+    }).join("");
+    if (actual && cartas.some((c) => String(c.id) === actual)) selectEl.value = actual;
+  }
 
-    try {
-      state.cartaCatalogoModal.catalogo = await ensureCatalogAgregador(carta.agregador);
-      renderCartaCatalogoModalList();
-    } catch (err) {
-      els.cartaCatalogoError.textContent = err.message;
-      els.cartaCatalogoError.classList.remove("hidden");
-    } finally {
-      els.cartaCatalogoLoading.classList.add("hidden");
+  // Categorías del maestro que corresponden a (marca, agregador) de una carta
+  // puntual — se usan tanto en el selector de "Asociar productos" como en el
+  // drag & drop de "Previsualizar".
+  function categoriasDeCarta(carta) {
+    return state.categorias.filter((c) => c.marca === carta.marca && c.agregador === carta.agregador);
+  }
+
+  // Mueve UN producto a una categoría (o a "sin categoría" si nuevaCategoriaId
+  // es vacío). Solo toca las dos listas afectadas (la que lo tenía y la
+  // nueva) y solo agrega/quita ese código puntual — nunca reemplaza la lista
+  // completa de una categoría por la vista acotada de una carta, porque esa
+  // misma categoría puede tener productos de OTRAS cartas que no deben
+  // perderse.
+  async function assignAsociarCategoria(carta, code, nuevaCategoriaId) {
+    await Promise.all([ensureCategoriasData(), ensureCartaData()]);
+    const grupo = categoriasDeCarta(carta);
+    const actual = grupo.find((c) => (state.carta[String(c.id)] || []).includes(String(code)));
+    const actualId = actual ? String(actual.id) : "";
+    const nuevoId = nuevaCategoriaId ? String(nuevaCategoriaId) : "";
+    if (actualId === nuevoId) return;
+
+    if (actualId) {
+      const codigos = (state.carta[actualId] || []).filter((c) => c !== String(code));
+      const res = await fetch(`/api/carta/categorias/${actualId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigos }),
+      });
+      const data = await res.json();
+      if (res.ok) state.carta = data.asignaciones;
+    }
+    if (nuevoId) {
+      const codigos = [...(state.carta[nuevoId] || []), String(code)];
+      const res = await fetch(`/api/carta/categorias/${nuevoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigos }),
+      });
+      const data = await res.json();
+      if (res.ok) state.carta = data.asignaciones;
     }
   }
 
-  function closeCartaCatalogoModal() {
-    els.cartaCatalogoOverlay.classList.add("hidden");
-    state.cartaCatalogoModal = { carta: null, catalogo: null, filtro: "todos" };
+  function switchCartasSubview(key) {
+    state.cartasSubview = key;
+    [...els.cartasSubviewTabs.children].forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.subview === key);
+    });
+    els.cartasSubviewMaestros.classList.toggle("hidden", key !== "maestros");
+    els.cartasSubviewAsociar.classList.toggle("hidden", key !== "asociar");
+    els.cartasSubviewPrevisualizar.classList.toggle("hidden", key !== "previsualizar");
   }
 
-  function renderCartaCatalogoModalList() {
-    const { carta, catalogo, filtro } = state.cartaCatalogoModal;
+  // ---- Sub-vista "Asociar productos": catálogo completo del agregador de
+  // la carta elegida, con búsqueda, filtro por asociación y toggle de
+  // asociación/integrable en línea (persiste de inmediato, sin paso de
+  // "Guardar" aparte). ---- //
+  async function selectAsociarCarta(carta) {
+    state.asociarCarta = { carta, catalogo: null, filtro: "todos" };
+    els.asociarSearch.value = "";
+    els.asociarTabs.forEach((t) => t.classList.toggle("active", t.dataset.filter === "todos"));
+    els.asociarError.classList.add("hidden");
+    els.asociarEmpty.classList.add("hidden");
+    els.asociarList.innerHTML = "";
+    els.asociarCount.textContent = "";
+    els.asociarSinCarta.classList.add("hidden");
+    els.asociarPanel.classList.remove("hidden");
+
+    const meta = AGGREGATOR_META[carta.agregador] || { label: carta.agregador };
+    els.asociarSubtitle.textContent = `${carta.nombre} · ${carta.marca} · ${meta.label}`;
+    els.asociarLoading.classList.remove("hidden");
+
+    try {
+      const [catalogo] = await Promise.all([
+        ensureCatalogAgregador(carta.agregador),
+        ensureCategoriasData(),
+        ensureCartaData(),
+      ]);
+      state.asociarCarta.catalogo = catalogo;
+      renderAsociarList();
+    } catch (err) {
+      els.asociarError.textContent = err.message;
+      els.asociarError.classList.remove("hidden");
+    } finally {
+      els.asociarLoading.classList.add("hidden");
+    }
+  }
+
+  function renderAsociarList() {
+    const { carta, catalogo, filtro } = state.asociarCarta;
     if (!carta || !catalogo) return;
     const asociados = new Map((carta.productos || []).map((p) => [p.code, p]));
-    const term = els.cartaCatalogoSearch.value.trim().toLowerCase();
+    const term = els.asociarSearch.value.trim().toLowerCase();
     const items = catalogo.filter((p) => {
       const code = String(p.code);
       const asociado = asociados.has(code);
@@ -2046,25 +2156,27 @@
       return true;
     });
 
-    els.cartaCatalogoEmpty.classList.toggle("hidden", items.length > 0);
-    els.cartaCatalogoCount.textContent = `${asociados.size} de ${catalogo.length} producto${catalogo.length === 1 ? "" : "s"} asociados` +
+    els.asociarEmpty.classList.toggle("hidden", items.length > 0);
+    els.asociarCount.textContent = `${asociados.size} de ${catalogo.length} producto${catalogo.length === 1 ? "" : "s"} asociados` +
       (term || filtro !== "todos" ? ` · mostrando ${items.length}` : "");
 
-    els.cartaCatalogoList.innerHTML = "";
+    els.asociarList.innerHTML = "";
     const frag = document.createDocumentFragment();
-    items.forEach((p) => frag.appendChild(buildCartaCatalogoModalRow(p, asociados.get(String(p.code)))));
-    els.cartaCatalogoList.appendChild(frag);
+    items.forEach((p) => frag.appendChild(buildAsociarRow(p, asociados.get(String(p.code)))));
+    els.asociarList.appendChild(frag);
   }
 
-  function buildCartaCatalogoModalRow(producto, asociacion) {
+  function buildAsociarRow(producto, asociacion) {
     const row = els.tplCartaCatalogoRow.content.cloneNode(true);
     const rowEl = row.querySelector(".carta-catalogo-row");
     const check = row.querySelector(".carta-catalogo-check");
     const nombreProdEl = row.querySelector(".carta-producto-nombre");
     const codeEl = row.querySelector(".carta-producto-code");
     const priceEl = row.querySelector(".carta-producto-price");
+    const categoriaSelect = row.querySelector(".carta-catalogo-categoria-select");
     const integrableBtn = row.querySelector(".carta-catalogo-integrable-btn");
 
+    const carta = state.asociarCarta.carta;
     const code = String(producto.code);
     const asociado = !!asociacion;
     nombreProdEl.textContent = producto.name || "(Sin nombre)";
@@ -2081,34 +2193,48 @@
     integrableBtn.classList.toggle("integrable", integrable);
     integrableBtn.classList.toggle("no-integrable", !integrable);
 
-    check.addEventListener("click", () => toggleCartaCatalogoAsociacion(code));
-    integrableBtn.addEventListener("click", () => toggleCartaCatalogoIntegrable(code));
+    categoriaSelect.disabled = !asociado;
+    if (asociado) {
+      const grupo = categoriasDeCarta(carta);
+      const actual = grupo.find((c) => (state.carta[String(c.id)] || []).includes(code));
+      categoriaSelect.innerHTML = `<option value="">Sin categoría</option>` +
+        grupo.map((c) => `<option value="${c.id}">${c.nombre.replace(/</g, "&lt;")}</option>`).join("");
+      categoriaSelect.value = actual ? String(actual.id) : "";
+      categoriaSelect.addEventListener("change", async () => {
+        categoriaSelect.disabled = true;
+        await assignAsociarCategoria(carta, code, categoriaSelect.value);
+        categoriaSelect.disabled = false;
+      });
+    }
+
+    check.addEventListener("click", () => toggleAsociarProducto(code));
+    integrableBtn.addEventListener("click", () => toggleAsociarIntegrable(code));
 
     return rowEl;
   }
 
-  function toggleCartaCatalogoAsociacion(code) {
-    const { carta } = state.cartaCatalogoModal;
+  function toggleAsociarProducto(code) {
+    const { carta } = state.asociarCarta;
     const actuales = carta.productos || [];
     const yaAsociado = actuales.some((p) => p.code === code);
     const nuevos = yaAsociado
       ? actuales.filter((p) => p.code !== code)
       : [...actuales, { code, integrable: true }];
-    persistCartaCatalogoProductos(nuevos);
+    persistAsociarProductos(nuevos);
   }
 
-  function toggleCartaCatalogoIntegrable(code) {
-    const { carta } = state.cartaCatalogoModal;
+  function toggleAsociarIntegrable(code) {
+    const { carta } = state.asociarCarta;
     const nuevos = (carta.productos || []).map((p) =>
       p.code === code ? { ...p, integrable: !p.integrable } : p
     );
-    persistCartaCatalogoProductos(nuevos);
+    persistAsociarProductos(nuevos);
   }
 
-  async function persistCartaCatalogoProductos(nuevaLista) {
-    const { carta } = state.cartaCatalogoModal;
+  async function persistAsociarProductos(nuevaLista) {
+    const { carta } = state.asociarCarta;
     if (!carta) return;
-    els.cartaCatalogoList.classList.add("cartas-panel-busy");
+    els.asociarList.classList.add("cartas-panel-busy");
     try {
       const res = await fetch(`/api/cartas-maestro/${carta.id}/productos`, {
         method: "PUT",
@@ -2119,13 +2245,224 @@
       if (!res.ok) throw new Error(data.error || "No se pudo actualizar la carta.");
       carta.productos = data.productos;
       renderCartasMaestro();
-      renderCartaCatalogoModalList();
+      renderAsociarList();
     } catch (err) {
-      els.cartaCatalogoError.textContent = err.message;
-      els.cartaCatalogoError.classList.remove("hidden");
+      els.asociarError.textContent = err.message;
+      els.asociarError.classList.remove("hidden");
     } finally {
-      els.cartaCatalogoList.classList.remove("cartas-panel-busy");
+      els.asociarList.classList.remove("cartas-panel-busy");
     }
+  }
+
+  // ---- Sub-vista "Previsualizar": vista de solo lectura, al estilo de una
+  // página de restaurante de un agregador (ej. Rappi), acotada a los
+  // productos asociados a UNA carta puntual — ver renderCarta2Preview. ---- //
+  async function selectPreviewCarta(carta) {
+    state.previewCarta = { carta };
+    els.preview2SinCarta.classList.add("hidden");
+    els.preview2SinProductos.classList.add("hidden");
+    els.preview2.classList.add("hidden");
+
+    const fieldAgg = TAB_TO_FIELD_AGG[carta.agregador] || carta.agregador;
+    await Promise.all([
+      ensureCategoriasData(),
+      ensureCartaData(),
+      ensureCatalogAgregador(carta.agregador),
+      ensurePreviewCamposData(fieldAgg),
+    ]);
+    if (state.previewCarta.carta !== carta) return; // el usuario cambió de carta mientras cargaba
+    renderCarta2Preview(carta);
+  }
+
+  async function ensurePreviewCamposData(fieldAgg) {
+    if (state.previewCampos[fieldAgg]) return;
+    try {
+      const res = await fetch(`/api/productos/campos?agregador=${fieldAgg}`);
+      const data = await res.json();
+      if (res.ok) state.previewCampos[fieldAgg] = data.campos || {};
+    } catch (_err) {
+      // Sin campos guardados: la previsualización cae al nombre/precio de Oracle.
+    }
+  }
+
+  function carta2FieldValue(fieldAgg, code, key) {
+    const campos = (state.previewCampos[fieldAgg] || {})[String(code)] || {};
+    const valor = campos[key];
+    return valor === undefined || valor === null ? "" : valor;
+  }
+
+  function carta2ResolvedInfo(carta, producto) {
+    const fieldAgg = TAB_TO_FIELD_AGG[carta.agregador] || carta.agregador;
+    const code = String(producto.code);
+    const nombre = carta2FieldValue(fieldAgg, code, "ProductoPadre") || producto.name || "(Sin nombre)";
+    const descripcion = fieldAgg === "LLAMAFOOD"
+      ? (carta2FieldValue(fieldAgg, code, "DescripcionProductoPadreLlamaFood") || carta2FieldValue(fieldAgg, code, "DescripcionProductoPadre"))
+      : carta2FieldValue(fieldAgg, code, "DescripcionProductoPadre");
+    const precioGuardado = carta2FieldValue(fieldAgg, code, "PrecioPadre");
+    const precio = precioGuardado !== "" ? precioGuardado : producto.price;
+    const imagen = carta2FieldValue(fieldAgg, code, "Imagen");
+    return { nombre, descripcion: descripcion || "Sin descripción todavía.", precio, imagen };
+  }
+
+  function renderCarta2Preview(carta) {
+    const catalogo = state.catalogPorAgregador[carta.agregador] || [];
+    const productosMap = new Map(catalogo.map((p) => [String(p.code), p]));
+    const asociaciones = carta.productos || [];
+
+    els.preview2SinProductos.classList.toggle("hidden", asociaciones.length > 0);
+    els.preview2.classList.toggle("hidden", asociaciones.length === 0);
+    if (!asociaciones.length) {
+      els.preview2Sections.innerHTML = "";
+      els.preview2NavList.innerHTML = "";
+      return;
+    }
+
+    const categorias = state.categorias.filter((c) => c.marca === carta.marca && c.agregador === carta.agregador && c.activo);
+    const codigosCarta = new Set(asociaciones.map((p) => String(p.code)));
+    const asignados = new Set();
+    categorias.forEach((cat) => {
+      (state.carta[String(cat.id)] || []).forEach((code) => {
+        if (codigosCarta.has(String(code))) asignados.add(String(code));
+      });
+    });
+    const sinCategoria = asociaciones.map((p) => p.code).filter((code) => !asignados.has(String(code)));
+
+    const meta = AGGREGATOR_META[carta.agregador] || { label: carta.agregador, color: "#0f172a" };
+    els.preview2Badge.textContent = (carta.nombre || "?").trim().charAt(0).toUpperCase() || "?";
+    els.preview2Badge.style.background = meta.color;
+    els.preview2Nombre.textContent = carta.nombre;
+    els.preview2Agg.textContent = `${carta.marca} · ${meta.label}`;
+
+    els.preview2Sections.innerHTML = "";
+    els.preview2NavList.innerHTML = "";
+
+    els.preview2Sections.appendChild(
+      buildCarta2Section("sin-categoria", "Sin categoría", sinCategoria, true, carta, productosMap, asociaciones)
+    );
+    els.preview2NavList.appendChild(buildCarta2NavItem("sin-categoria", "Sin categoría", sinCategoria.length, true));
+
+    let totalEnCarta = 0;
+    categorias.forEach((cat) => {
+      const codigos = (state.carta[String(cat.id)] || []).filter((code) => codigosCarta.has(String(code)));
+      totalEnCarta += codigos.length;
+      els.preview2Sections.appendChild(buildCarta2Section(String(cat.id), cat.nombre, codigos, false, carta, productosMap, asociaciones));
+      els.preview2NavList.appendChild(buildCarta2NavItem(String(cat.id), cat.nombre, codigos.length, false));
+    });
+
+    els.preview2StatCategorias.textContent = categorias.length;
+    els.preview2StatProductos.textContent = totalEnCarta;
+    els.preview2StatPendientes.textContent = sinCategoria.length;
+  }
+
+  function buildCarta2Section(containerKey, titulo, codigos, esSinCategoria, carta, productosMap, asociaciones) {
+    const section = document.createElement("section");
+    section.className = "carta-section" + (esSinCategoria ? " carta-section-unassigned" : "");
+    section.id = `preview2-section-${containerKey}`;
+
+    const header = document.createElement("div");
+    header.className = "carta-section-header";
+    header.innerHTML = `<h4>${String(titulo).replace(/</g, "&lt;")}</h4><span class="carta-section-count">${codigos.length}</span>`;
+    section.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "carta-section-body";
+    body.dataset.categoriaId = esSinCategoria ? "" : containerKey;
+    makeCarta2Droppable(body, carta);
+    codigos.forEach((code) => {
+      const producto = productosMap.get(String(code));
+      const asociacion = asociaciones.find((p) => p.code === String(code));
+      if (producto) body.appendChild(buildCarta2Row(carta, producto, asociacion, esSinCategoria));
+    });
+    if (!codigos.length) {
+      const empty = document.createElement("div");
+      empty.className = "carta-section-empty";
+      empty.textContent = esSinCategoria ? "Todos los productos ya están ubicados en alguna categoría." : "Sin productos en esta categoría — arrastra una tarjeta aquí.";
+      body.appendChild(empty);
+    }
+
+    section.appendChild(body);
+    return section;
+  }
+
+  // Arrastrar una tarjeta de "Previsualizar" hasta otra sección la mueve a
+  // esa categoría (o a "Sin categoría"), usando el mismo helper seguro que
+  // el selector de "Asociar productos" — nunca reemplaza la lista completa
+  // de la categoría destino, solo agrega/quita el código soltado.
+  function makeCarta2Droppable(container, carta) {
+    container.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      container.classList.add("carta-dragover");
+    });
+    container.addEventListener("dragleave", () => {
+      container.classList.remove("carta-dragover");
+    });
+    container.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      container.classList.remove("carta-dragover");
+      const code = e.dataTransfer.getData("text/plain");
+      if (!code) return;
+      await assignAsociarCategoria(carta, code, container.dataset.categoriaId);
+      renderCarta2Preview(carta);
+    });
+  }
+
+  function buildCarta2NavItem(containerKey, titulo, count, esSinCategoria) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "carta-nav-item" + (esSinCategoria ? " carta-nav-unassigned" : "");
+    btn.innerHTML = `<span>${String(titulo).replace(/</g, "&lt;")}</span><span class="carta-nav-count">${count}</span>`;
+    btn.addEventListener("click", () => {
+      document.getElementById(`preview2-section-${containerKey}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return btn;
+  }
+
+  function buildCarta2Row(carta, producto, asociacion, esSinCategoria) {
+    const row = document.createElement("div");
+    const noDisponible = !!asociacion && asociacion.integrable === false;
+    row.className = "carta-row" + (noDisponible ? " carta-row-no-disp" : "");
+    row.draggable = true;
+    row.dataset.code = String(producto.code);
+    row.title = "Arrastra para mover este producto a otra categoría";
+
+    const info = carta2ResolvedInfo(carta, producto);
+    const thumbInner = info.imagen
+      ? `<img src="${String(info.imagen).replace(/"/g, "&quot;")}" alt="" onerror="this.style.display='none'" />`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const badge = noDisponible ? `<span class="carta-row-no-disp-badge">No disponible</span>` : "";
+
+    row.innerHTML = `
+      <span class="carta-row-handle"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg></span>
+      <div class="carta-row-info">
+        <p class="carta-row-name">${String(info.nombre).replace(/</g, "&lt;")} ${badge}</p>
+        <p class="carta-row-desc">${String(info.descripcion).replace(/</g, "&lt;")}</p>
+        <div class="carta-row-meta">
+          <span>${fmtPrice(info.precio)}</span>
+          <span class="carta-row-code">· ${producto.code}</span>
+        </div>
+      </div>
+      <div class="carta-row-thumb">${thumbInner}</div>
+      ${esSinCategoria ? "" : `
+      <button type="button" class="carta-row-remove" title="Quitar de esta categoría">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>`}
+    `;
+
+    row.addEventListener("dragstart", (e) => {
+      row.classList.add("carta-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", row.dataset.code);
+    });
+    row.addEventListener("dragend", () => row.classList.remove("carta-dragging"));
+
+    if (!esSinCategoria) {
+      row.querySelector(".carta-row-remove").addEventListener("click", async () => {
+        await assignAsociarCategoria(carta, producto.code, "");
+        renderCarta2Preview(carta);
+      });
+    }
+
+    return row;
   }
 
   // Catálogo del agregador, cacheado en sesión: lo usa el modal "Catálogo
@@ -2165,6 +2502,8 @@
         if (data.marca && !state.marcas.includes(data.marca)) state.marcas.push(data.marca);
         updateMarcasOptions();
         renderCartasMaestro();
+        populateCartaSelect(els.asociarCartaSelect);
+        populateCartaSelect(els.preview2CartaSelect);
         els.formCarta.reset();
         els.formCarta.classList.add("hidden");
       } else {
@@ -3542,20 +3881,41 @@
   els.filtroCartaMarca.addEventListener("change", renderCartasMaestro);
   els.filtroCartaAgregador.addEventListener("change", renderCartasMaestro);
 
-  els.btnCloseCartaCatalogo.addEventListener("click", closeCartaCatalogoModal);
-  els.btnCerrarCartaCatalogo.addEventListener("click", closeCartaCatalogoModal);
-  els.cartaCatalogoOverlay.addEventListener("click", (e) => {
-    if (e.target === els.cartaCatalogoOverlay) closeCartaCatalogoModal();
+  [...els.cartasSubviewTabs.children].forEach((btn) => {
+    btn.addEventListener("click", () => switchCartasSubview(btn.dataset.subview));
   });
-  els.cartaCatalogoSearch.addEventListener("input", renderCartaCatalogoModalList);
-  els.cartaCatalogoTabs.forEach((tab) => {
+
+  els.asociarCartaSelect.addEventListener("change", () => {
+    const carta = state.cartasMaestro.find((c) => String(c.id) === els.asociarCartaSelect.value);
+    if (carta) {
+      selectAsociarCarta(carta);
+    } else {
+      state.asociarCarta = { carta: null, catalogo: null, filtro: "todos" };
+      els.asociarPanel.classList.add("hidden");
+      els.asociarSinCarta.classList.remove("hidden");
+    }
+  });
+  els.asociarSearch.addEventListener("input", renderAsociarList);
+  els.asociarTabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       if (tab.classList.contains("active")) return;
-      els.cartaCatalogoTabs.forEach((t) => t.classList.remove("active"));
+      els.asociarTabs.forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
-      state.cartaCatalogoModal.filtro = tab.dataset.filter;
-      renderCartaCatalogoModalList();
+      state.asociarCarta.filtro = tab.dataset.filter;
+      renderAsociarList();
     });
+  });
+
+  els.preview2CartaSelect.addEventListener("change", () => {
+    const carta = state.cartasMaestro.find((c) => String(c.id) === els.preview2CartaSelect.value);
+    if (carta) {
+      selectPreviewCarta(carta);
+    } else {
+      state.previewCarta = { carta: null };
+      els.preview2.classList.add("hidden");
+      els.preview2SinProductos.classList.add("hidden");
+      els.preview2SinCarta.classList.remove("hidden");
+    }
   });
 
   els.btnClosePreview.addEventListener("click", closePreview);

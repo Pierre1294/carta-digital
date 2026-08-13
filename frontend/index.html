@@ -285,46 +285,126 @@
           <div id="categorias-list" class="space-y-3"></div>
         </section>
 
-        <!-- Vista: Maestro de cartas por agregador -->
+        <!-- Vista: Cartas por agregador -->
         <section id="view-cartas" class="hidden max-w-6xl mx-auto">
-          <div class="mb-1 flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h2 class="text-sm font-semibold">Maestro de cartas por agregador</h2>
-              <p class="text-xs text-slate-400 mt-0.5">Por marca y agregador — agrupa un subconjunto del catálogo y marca qué productos se pueden integrar en cada carta.</p>
-            </div>
-            <button id="btn-nueva-carta" class="text-xs font-medium px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700 transition whitespace-nowrap">+ Nueva carta</button>
+          <div class="mb-3">
+            <h2 class="text-sm font-semibold">Cartas por agregador</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Maestro de cartas, asociación de productos y previsualización — por marca y agregador.</p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 my-4">
-            <input id="filtro-carta-busqueda" type="text" placeholder="Buscar carta por nombre…" class="cfg-input text-xs !py-1.5 w-56" />
-            <select id="filtro-carta-marca" class="cfg-input text-xs !py-1.5"><option value="">Todas las marcas</option></select>
-            <select id="filtro-carta-agregador" class="cfg-input text-xs !py-1.5"><option value="">Todos los agregadores</option></select>
+          <nav id="cartas-subview-tabs" class="segmented mb-4">
+            <button type="button" data-subview="maestros" class="active">Maestros</button>
+            <button type="button" data-subview="asociar">Asociar productos</button>
+            <button type="button" data-subview="previsualizar">Previsualizar</button>
+          </nav>
+
+          <!-- Sub-vista: Maestros de carta (alta / edición / activar-desactivar) -->
+          <div id="cartas-subview-maestros">
+            <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <input id="filtro-carta-busqueda" type="text" placeholder="Buscar carta por nombre…" class="cfg-input text-xs !py-1.5 w-56" />
+                <select id="filtro-carta-marca" class="cfg-input text-xs !py-1.5"><option value="">Todas las marcas</option></select>
+                <select id="filtro-carta-agregador" class="cfg-input text-xs !py-1.5"><option value="">Todos los agregadores</option></select>
+              </div>
+              <button id="btn-nueva-carta" class="text-xs font-medium px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700 transition whitespace-nowrap">+ Nueva carta</button>
+            </div>
+
+            <!-- Form alta de carta -->
+            <form id="form-carta" class="hidden bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="text-xs font-medium text-slate-500">Nombre de la carta</span>
+                <input name="nombre" required class="cfg-input" placeholder="Ej. Carta Verano 2026" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-xs font-medium text-slate-500">Marca</span>
+                <input name="marca" required list="marcas-datalist" class="cfg-input" placeholder="Ej. Popeyes" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-xs font-medium text-slate-500">Agregador</span>
+                <select name="agregador" required class="cfg-input"></select>
+              </label>
+              <div class="sm:col-span-4 flex justify-end gap-2 pt-1">
+                <button type="button" id="btn-cancelar-carta" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
+                <button type="submit" class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700">Guardar carta</button>
+              </div>
+            </form>
+
+            <div id="cartas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+            <div id="cartas-empty" class="hidden py-16 text-center text-sm text-slate-400"></div>
+
+            <div id="cartas-list" class="space-y-3"></div>
           </div>
 
-          <!-- Form alta de carta -->
-          <form id="form-carta" class="hidden bg-white rounded-xl border border-slate-200 p-4 mb-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
-            <label class="flex flex-col gap-1 sm:col-span-2">
-              <span class="text-xs font-medium text-slate-500">Nombre de la carta</span>
-              <input name="nombre" required class="cfg-input" placeholder="Ej. Carta Verano 2026" />
+          <!-- Sub-vista: Asociar productos a una carta -->
+          <div id="cartas-subview-asociar" class="hidden">
+            <label class="flex flex-col gap-1 max-w-md mb-4">
+              <span class="text-xs font-medium text-slate-500">Carta</span>
+              <select id="asociar-carta-select" class="cfg-input"><option value="">Selecciona una carta…</option></select>
             </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-medium text-slate-500">Marca</span>
-              <input name="marca" required list="marcas-datalist" class="cfg-input" placeholder="Ej. Popeyes" />
-            </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-medium text-slate-500">Agregador</span>
-              <select name="agregador" required class="cfg-input"></select>
-            </label>
-            <div class="sm:col-span-4 flex justify-end gap-2 pt-1">
-              <button type="button" id="btn-cancelar-carta" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cancelar</button>
-              <button type="submit" class="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-900 text-white hover:bg-slate-700">Guardar carta</button>
+
+            <div id="asociar-sin-carta" class="py-16 text-center text-sm text-slate-400">Elige una carta para asociar productos del catálogo del agregador.</div>
+
+            <div id="asociar-panel" class="hidden">
+              <p id="asociar-subtitle" class="text-xs text-slate-400 mb-3"></p>
+              <div class="carta-catalogo-toolbar mb-3">
+                <input id="asociar-search" type="text" placeholder="Buscar producto o código…"
+                  class="flex-1 min-w-[10rem] pl-3 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                <div class="carta-catalogo-tabs" role="tablist">
+                  <button type="button" class="carta-catalogo-tab active" data-filter="todos">Todos</button>
+                  <button type="button" class="carta-catalogo-tab" data-filter="asociados">Asociados</button>
+                  <button type="button" class="carta-catalogo-tab" data-filter="no-asociados">No asociados</button>
+                </div>
+              </div>
+              <p id="asociar-count" class="text-xs text-slate-400 mb-1"></p>
+              <div id="asociar-error" class="hidden mb-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+              <div id="asociar-loading" class="hidden py-10 text-center text-sm text-slate-400">Cargando catálogo del agregador…</div>
+              <div id="asociar-empty" class="hidden py-10 text-center text-sm text-slate-400">No hay productos que coincidan.</div>
+              <div id="asociar-list" class="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 px-4"></div>
             </div>
-          </form>
+          </div>
 
-          <div id="cartas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
-          <div id="cartas-empty" class="hidden py-16 text-center text-sm text-slate-400"></div>
+          <!-- Sub-vista: Previsualizar una carta al estilo cliente (ej. Rappi) -->
+          <div id="cartas-subview-previsualizar" class="hidden">
+            <label class="flex flex-col gap-1 max-w-md mb-4">
+              <span class="text-xs font-medium text-slate-500">Carta</span>
+              <select id="preview2-carta-select" class="cfg-input"><option value="">Selecciona una carta…</option></select>
+            </label>
 
-          <div id="cartas-list" class="space-y-3"></div>
+            <div id="preview2-sin-carta" class="py-16 text-center text-sm text-slate-400">Elige una carta para previsualizarla.</div>
+            <div id="preview2-sin-productos" class="hidden py-16 text-center text-sm text-slate-400">Esta carta todavía no tiene productos asociados. Agrégalos en <strong>Asociar productos</strong>.</div>
+
+            <div id="preview2" class="carta-preview hidden">
+              <aside class="carta-preview-nav">
+                <div class="carta-preview-identity">
+                  <div class="carta-preview-cover">
+                    <span id="preview2-badge" class="carta-preview-badge"></span>
+                  </div>
+                  <h3 id="preview2-nombre" class="carta-preview-marca"></h3>
+                  <p id="preview2-agg" class="carta-preview-agg"></p>
+                </div>
+                <div class="carta-preview-stats">
+                  <div class="carta-preview-stat">
+                    <span>Categorías</span>
+                    <strong id="preview2-stat-categorias">0</strong>
+                  </div>
+                  <div class="carta-preview-stat">
+                    <span>Productos en la carta</span>
+                    <strong id="preview2-stat-productos">0</strong>
+                  </div>
+                  <div class="carta-preview-stat">
+                    <span>Sin ubicar</span>
+                    <strong id="preview2-stat-pendientes">0</strong>
+                  </div>
+                </div>
+                <p class="carta-preview-hint">Arrastra una tarjeta a otra categoría (o a "Sin categoría") para corregir dónde aparece.</p>
+                <nav id="preview2-nav-list" class="carta-nav-list"></nav>
+              </aside>
+
+              <div id="preview2-scroll" class="carta-preview-scroll">
+                <div id="preview2-sections"></div>
+              </div>
+            </div>
+          </div>
         </section>
 
       </div>
@@ -493,46 +573,20 @@
       </label>
     </div>
 
-    <div class="mt-3 pt-3 border-t border-slate-100">
-      <button type="button" class="btn-ver-catalogo-carta text-xs font-medium px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5">
+    <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+      <button type="button" class="btn-asociar-carta text-xs font-medium px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
-        Ver catálogo
+        Asociar productos
+      </button>
+      <button type="button" class="btn-previsualizar-carta text-xs font-medium px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/></svg>
+        Previsualizar
       </button>
     </div>
   </article>
 </template>
 
-<!-- Modal: catálogo completo del agregador de una carta (ver / asociar productos) -->
-<div id="carta-catalogo-overlay" class="hidden fixed inset-0 z-40 bg-slate-900/40 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-      <div>
-        <h2 class="font-semibold text-sm">Catálogo de la carta</h2>
-        <p id="carta-catalogo-subtitle" class="text-xs text-slate-400 mt-0.5"></p>
-      </div>
-      <button id="btn-close-carta-catalogo" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
-    </div>
-    <div class="carta-catalogo-toolbar px-5 py-3 border-b border-slate-100 shrink-0">
-      <input id="carta-catalogo-search" type="text" placeholder="Buscar producto o código…"
-        class="flex-1 min-w-[10rem] pl-3 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
-      <div class="carta-catalogo-tabs" role="tablist">
-        <button type="button" class="carta-catalogo-tab active" data-filter="todos">Todos</button>
-        <button type="button" class="carta-catalogo-tab" data-filter="asociados">Asociados</button>
-        <button type="button" class="carta-catalogo-tab" data-filter="no-asociados">No asociados</button>
-      </div>
-    </div>
-    <p id="carta-catalogo-count" class="px-5 pt-3 text-xs text-slate-400 shrink-0"></p>
-    <div id="carta-catalogo-error" class="hidden mx-5 mt-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 shrink-0"></div>
-    <div id="carta-catalogo-loading" class="hidden py-10 text-center text-sm text-slate-400 shrink-0">Cargando catálogo del agregador…</div>
-    <div id="carta-catalogo-empty" class="hidden py-10 text-center text-sm text-slate-400 shrink-0">No hay productos que coincidan.</div>
-    <div id="carta-catalogo-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 px-5 mt-1"></div>
-    <div class="px-5 py-3 border-t border-slate-100 shrink-0 bg-white flex justify-end">
-      <button type="button" id="btn-cerrar-carta-catalogo" class="px-3 py-1.5 rounded-md text-xs font-medium border border-slate-200 hover:bg-slate-50">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Template de fila de producto dentro del modal de catálogo de una carta -->
+<!-- Template de fila de producto: reutilizada en "Asociar productos" (checkbox de asociación) -->
 <template id="tpl-carta-catalogo-row">
   <div class="carta-catalogo-row flex items-center gap-3 py-2 text-sm">
     <button type="button" class="carta-catalogo-check shrink-0" title="Asociar a esta carta"></button>
@@ -541,6 +595,7 @@
       <span class="carta-producto-code block text-xs text-slate-400 font-mono"></span>
     </span>
     <span class="carta-producto-price text-xs text-slate-500 whitespace-nowrap"></span>
+    <select class="carta-catalogo-categoria-select cfg-input text-xs !py-1" title="Categoría de este producto dentro de la carta"></select>
     <button type="button" class="carta-catalogo-integrable-btn type-badge" title="Puede integrarse dentro de esta carta — clic para alternar"></button>
   </div>
 </template>

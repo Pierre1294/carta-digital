@@ -10,3 +10,6 @@ backend/sts_config.json
 
 # Config local de Claude Code, no forma parte del proyecto.
 .claude/
+
+# Backups/comprimidos locales, no forman parte del proyecto.
+*.rar
