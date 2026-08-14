@@ -131,6 +131,13 @@ def get_menu():
 # ------------------------------------------------------------------ #
 @app.route("/api/preguntas", methods=["GET"])
 def get_preguntas():
+    # "marca": mismo patrón que /api/menu — esta POC tiene una sola conexión
+    # de Oracle Simphony para todas las marcas, así que por ahora el
+    # parámetro solo se recibe y se refleja en la respuesta sin filtrar
+    # nada. Cuando cada marca tenga su propio servicio STS, este es el
+    # punto donde se debe resolver la config según "marca".
+    marca = (request.args.get("marca") or "").strip()
+
     config = sts.load_config()
     if not _cache_is_fresh():
         try:
@@ -140,18 +147,28 @@ def get_preguntas():
 
     preguntas = sts.distinct_questions(_cache["tree"] or [])
     comerciales = store.load_preguntas_comerciales()
+    cantidades = store.load_preguntas_cantidad()
     for p in preguntas:
         p["pregunta_comercial"] = comerciales.get(p["code"], "")
+        p["cantidad_maxima"] = cantidades.get(p["code"])
 
-    return jsonify({"preguntas": preguntas})
+    return jsonify({"preguntas": preguntas, "marca": marca})
 
 
 @app.route("/api/preguntas/<code>", methods=["POST"])
 def set_pregunta_comercial(code):
     body = request.get_json(force=True, silent=True) or {}
     texto = (body.get("pregunta_comercial") or "").strip()
+    try:
+        cantidad = int(body.get("cantidad_maxima"))
+    except (TypeError, ValueError):
+        cantidad = 0
+    if cantidad <= 0:
+        return jsonify({"error": "La cantidad debe ser un número mayor a 0."}), 400
+
     valor = store.save_pregunta_comercial(code, texto)
-    return jsonify({"code": code, "pregunta_comercial": valor})
+    cantidad_guardada = store.save_pregunta_cantidad(code, cantidad)
+    return jsonify({"code": code, "pregunta_comercial": valor, "cantidad_maxima": cantidad_guardada})
 
 
 @app.route("/api/preguntas-comerciales", methods=["GET"])

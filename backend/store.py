@@ -12,6 +12,7 @@ from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent
 PREGUNTAS_PATH = BACKEND_DIR / "preguntas_store.json"
+PREGUNTAS_CANTIDAD_PATH = BACKEND_DIR / "preguntas_cantidad_store.json"
 CATEGORIAS_PATH = BACKEND_DIR / "categorias_store.json"
 PRODUCTO_CAMPOS_PATH = BACKEND_DIR / "producto_campos_store.json"
 MARCAS_PATH = BACKEND_DIR / "marcas_store.json"
@@ -62,6 +63,23 @@ def save_pregunta_comercial(code, texto):
     data = load_preguntas_comerciales()
     data[str(code)] = texto
     _write_json(PREGUNTAS_PATH, data)
+    return data[str(code)]
+
+
+def load_preguntas_cantidad():
+    """dict: {codigo_pregunta_oracle: cantidad_maxima (int)}
+
+    Cantidad máxima de veces/opciones que el agregador permite seleccionar
+    para esa pregunta (comboGroup) — configuración comercial aparte del
+    nombre a mostrar.
+    """
+    return _read_json(PREGUNTAS_CANTIDAD_PATH, {})
+
+
+def save_pregunta_cantidad(code, cantidad):
+    data = load_preguntas_cantidad()
+    data[str(code)] = int(cantidad)
+    _write_json(PREGUNTAS_CANTIDAD_PATH, data)
     return data[str(code)]
 
 

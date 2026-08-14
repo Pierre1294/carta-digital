@@ -179,6 +179,10 @@
     viewCategorias: document.getElementById("view-categorias"),
     viewCartas: document.getElementById("view-cartas"),
 
+    preguntasMarcaSelect: document.getElementById("preguntas-marca-select"),
+    preguntasMarcaHint: document.getElementById("preguntas-marca-hint"),
+    preguntasMarcaEmpty: document.getElementById("preguntas-marca-empty"),
+    preguntasContent: document.getElementById("preguntas-content"),
     preguntasSearch: document.getElementById("preguntas-search"),
     preguntasCount: document.getElementById("preguntas-count"),
     preguntasLoading: document.getElementById("preguntas-loading"),
@@ -203,13 +207,17 @@
     formCarta: document.getElementById("form-carta"),
     btnCancelarCarta: document.getElementById("btn-cancelar-carta"),
     filtroCartaBusqueda: document.getElementById("filtro-carta-busqueda"),
-    filtroCartaMarca: document.getElementById("filtro-carta-marca"),
     filtroCartaAgregador: document.getElementById("filtro-carta-agregador"),
     cartasError: document.getElementById("cartas-error"),
     cartasEmpty: document.getElementById("cartas-empty"),
     cartasList: document.getElementById("cartas-list"),
     tplCartaCard: document.getElementById("tpl-carta-card"),
     tplCartaCatalogoRow: document.getElementById("tpl-carta-catalogo-row"),
+
+    cartasMarcaSelect: document.getElementById("cartas-marca-select"),
+    cartasMarcaHint: document.getElementById("cartas-marca-hint"),
+    cartasMarcaEmpty: document.getElementById("cartas-marca-empty"),
+    cartasContent: document.getElementById("cartas-content"),
 
     cartasSubviewTabs: document.getElementById("cartas-subview-tabs"),
     cartasSubviewMaestros: document.getElementById("cartas-subview-maestros"),
@@ -329,10 +337,12 @@
     currentView: "resumen",
     preguntas: [],
     preguntasLoaded: false,
+    preguntasMarca: "", // marca elegida en Maestro de preguntas; obligatoria antes de listar
     categorias: [],
     categoriasLoaded: false,
     cartasMaestro: [],
     cartasMaestroLoaded: false,
+    cartasMarca: "", // marca elegida en Cartas por agregador; obligatoria antes de listar
     catalogPorAgregador: {}, // {AGREGADOR: [productos...]} cache para nombre/precio en el maestro de cartas
     cartasSubview: "maestros", // "maestros" | "asociar" | "previsualizar" (vista "Cartas por agregador")
     // Sub-vista "Asociar productos": carta elegida + catálogo completo del
@@ -486,7 +496,6 @@
         <div class="nav-agg-row">
           <span class="nav-dot" style="background:${meta.color}"></span>
           <span class="nav-label">${meta.label}</span>
-          <span class="nav-badge${pendientes === 0 ? " zero" : ""}">${pendientes === null ? "…" : pendientes}</span>
         </div>
         <div class="nav-progress-track"><div class="nav-progress-fill" style="width:${pct}%; background:${meta.color}"></div></div>
       `;
@@ -1410,13 +1419,19 @@
     } else if (view === "resumen") {
       renderResumen();
     }
-    if (view === "preguntas" && !state.preguntasLoaded) {
-      await loadPreguntas();
+    if (view === "preguntas") {
+      populatePreguntasMarcaOptions();
+      updatePreguntasMarcaGate();
+      if (state.preguntasMarca && !state.preguntasLoaded) {
+        await loadPreguntas();
+      }
     }
     if (view === "categorias" && !state.categoriasLoaded) {
       await loadCategorias();
     }
     if (view === "cartas") {
+      populateCartasMarcaOptions();
+      updateCartasMarcaGate();
       if (!state.cartasMaestroLoaded) {
         await loadCartasMaestro();
       } else {
@@ -1455,7 +1470,9 @@
     } else if (view === "preguntas") {
       els.topbarEyebrow.textContent = "Maestros";
       els.topbarTitle.textContent = "Preguntas comerciales";
-      els.topbarSub.textContent = "Nombre en Oracle Simphony y su equivalente comercial.";
+      els.topbarSub.textContent = state.preguntasMarca
+        ? "Nombre en Oracle Simphony y su equivalente comercial."
+        : "Elige una marca para ver sus preguntas.";
     } else if (view === "categorias") {
       els.topbarEyebrow.textContent = "Maestros";
       els.topbarTitle.textContent = "Categorías";
@@ -1463,19 +1480,42 @@
     } else if (view === "cartas") {
       els.topbarEyebrow.textContent = "Maestros";
       els.topbarTitle.textContent = "Cartas por agregador";
-      els.topbarSub.textContent = "Agrupa productos del catálogo por carta y marca cuáles se pueden integrar.";
+      els.topbarSub.textContent = state.cartasMarca
+        ? "Agrupa productos del catálogo por carta y marca cuáles se pueden integrar."
+        : "Elige una marca para ver sus cartas.";
     }
   }
 
   // ------------------------------------------------------------------ //
   // Maestro de preguntas
   // ------------------------------------------------------------------ //
+  // Selector de marca: mismo patrón que Catálogo (obligatorio antes de listar).
+  // En esta POC todas las marcas comparten el mismo servicio de Oracle
+  // Simphony, así que "marca" solo se envía y refleja en la respuesta (ver
+  // backend/app.py get_preguntas); cuando cada marca tenga su propio
+  // servicio, este es el punto donde el filtro empieza a traer datos reales.
+  function populatePreguntasMarcaOptions() {
+    const marcas = [...state.marcas].sort();
+    els.preguntasMarcaSelect.innerHTML =
+      `<option value="">Selecciona una marca…</option>` + marcas.map((m) => `<option value="${m}">${m}</option>`).join("");
+    els.preguntasMarcaSelect.value = marcas.includes(state.preguntasMarca) ? state.preguntasMarca : "";
+  }
+
+  function updatePreguntasMarcaGate() {
+    const hasMarca = !!state.preguntasMarca;
+    els.preguntasMarcaEmpty.classList.toggle("visible", !hasMarca);
+    els.preguntasContent.classList.toggle("hidden", !hasMarca);
+    els.preguntasMarcaHint.textContent = hasMarca
+      ? "Catálogo de Oracle Simphony (mismo servicio para todas las marcas en esta POC)."
+      : "";
+  }
+
   async function loadPreguntas() {
     els.preguntasLoading.classList.remove("hidden");
     els.preguntasError.classList.add("hidden");
     els.preguntasEmpty.classList.add("hidden");
     try {
-      const res = await fetch("/api/preguntas");
+      const res = await fetch(`/api/preguntas?marca=${encodeURIComponent(state.preguntasMarca)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error consultando preguntas.");
       state.preguntas = data.preguntas || [];
@@ -1509,19 +1549,31 @@
     const code = node.querySelector(".pregunta-code");
     const oracle = node.querySelector(".pregunta-oracle");
     const input = node.querySelector(".pregunta-comercial-input");
+    const cantidadInput = node.querySelector(".pregunta-cantidad-input");
     const actions = node.querySelector(".pregunta-actions");
     const btnGuardar = node.querySelector(".btn-guardar-pregunta");
     const btnCancelar = node.querySelector(".btn-cancelar-pregunta");
+    const cantidadHint = node.querySelector(".pregunta-cantidad-hint");
     const msg = node.querySelector(".pregunta-msg");
 
     code.textContent = pregunta.code;
     oracle.textContent = pregunta.name || "(Sin nombre)";
     input.value = pregunta.pregunta_comercial || "";
+    cantidadInput.value = pregunta.cantidad_maxima || "";
 
     let lastSaved = input.value;
+    let lastSavedCantidad = cantidadInput.value;
     let saving = false;
 
-    const setDirty = (dirty) => actions.classList.toggle("hidden", !dirty);
+    const cantidadValida = () => Number(cantidadInput.value) > 0;
+
+    const setDirty = (dirty) => {
+      actions.classList.toggle("hidden", !dirty);
+      if (dirty) {
+        btnGuardar.disabled = !cantidadValida();
+        cantidadHint.classList.toggle("hidden", cantidadValida());
+      }
+    };
 
     const showMsg = (text, ok) => {
       msg.className = `pregunta-msg text-xs font-medium ${ok ? "text-green-600" : "text-red-600"}`;
@@ -1530,8 +1582,10 @@
       if (ok) setTimeout(() => msg.classList.add("hidden"), 2000);
     };
 
+    const isDirty = () => input.value !== lastSaved || cantidadInput.value !== lastSavedCantidad;
+
     const doSave = async () => {
-      if (saving || input.value === lastSaved) return;
+      if (saving || !isDirty() || !cantidadValida()) return;
       saving = true;
       btnGuardar.disabled = true;
       btnGuardar.textContent = "Guardando…";
@@ -1540,12 +1594,13 @@
         const res = await fetch(`/api/preguntas/${encodeURIComponent(pregunta.code)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pregunta_comercial: input.value }),
+          body: JSON.stringify({ pregunta_comercial: input.value, cantidad_maxima: Number(cantidadInput.value) }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || "No se pudo guardar la pregunta comercial.");
 
         lastSaved = input.value;
+        lastSavedCantidad = cantidadInput.value;
         const trimmed = lastSaved.trim();
         if (trimmed) {
           state.preguntasComerciales[String(pregunta.code)] = trimmed;
@@ -1558,19 +1613,25 @@
         showMsg(err.message, false);
       } finally {
         saving = false;
-        btnGuardar.disabled = false;
+        btnGuardar.disabled = !cantidadValida();
         btnGuardar.textContent = "Guardar";
       }
     };
 
     const doCancel = () => {
       input.value = lastSaved;
+      cantidadInput.value = lastSavedCantidad;
       setDirty(false);
       msg.classList.add("hidden");
     };
 
-    input.addEventListener("input", () => setDirty(input.value !== lastSaved));
+    input.addEventListener("input", () => setDirty(isDirty()));
     input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); doSave(); }
+      if (e.key === "Escape") { e.preventDefault(); doCancel(); }
+    });
+    cantidadInput.addEventListener("input", () => setDirty(isDirty()));
+    cantidadInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); doSave(); }
       if (e.key === "Escape") { e.preventDefault(); doCancel(); }
     });
@@ -1607,12 +1668,8 @@
       `<option value="">Todas las marcas</option>` + marcas.map((m) => `<option value="${m}">${m}</option>`).join("");
     els.filtroMarca.value = marcas.includes(current) ? current : "";
 
-    const currentCarta = els.filtroCartaMarca.value;
-    els.filtroCartaMarca.innerHTML =
-      `<option value="">Todas las marcas</option>` + marcas.map((m) => `<option value="${m}">${m}</option>`).join("");
-    els.filtroCartaMarca.value = marcas.includes(currentCarta) ? currentCarta : "";
-
     populateCatalogMarcaOptions();
+    populateCartasMarcaOptions();
   }
 
   async function loadMarcas() {
@@ -1903,6 +1960,26 @@
   // ------------------------------------------------------------------ //
   // Maestro de cartas por agregador
   // ------------------------------------------------------------------ //
+  // Selector de marca: mismo patrón que Catálogo/Preguntas (obligatorio antes
+  // de listar). A diferencia de esos casos, las cartas SÍ son datos locales
+  // propios (no vienen de Oracle Simphony), así que "marca" filtra de verdad
+  // los maestros, el combo de "Asociar productos" y el de "Previsualizar".
+  function populateCartasMarcaOptions() {
+    const marcas = [...state.marcas].sort();
+    els.cartasMarcaSelect.innerHTML =
+      `<option value="">Selecciona una marca…</option>` + marcas.map((m) => `<option value="${m}">${m}</option>`).join("");
+    els.cartasMarcaSelect.value = marcas.includes(state.cartasMarca) ? state.cartasMarca : "";
+  }
+
+  function updateCartasMarcaGate() {
+    const hasMarca = !!state.cartasMarca;
+    els.cartasMarcaEmpty.classList.toggle("visible", !hasMarca);
+    els.cartasContent.classList.toggle("hidden", !hasMarca);
+    els.cartasMarcaHint.textContent = hasMarca
+      ? "Maestros, asociación de productos y previsualización filtrados por esta marca."
+      : "";
+  }
+
   async function loadCartasMaestro() {
     els.cartasError.classList.add("hidden");
     try {
@@ -1922,12 +1999,12 @@
   }
 
   function renderCartasMaestro() {
-    const marca = els.filtroCartaMarca.value;
+    const marca = state.cartasMarca;
     const agregador = els.filtroCartaAgregador.value;
     const term = els.filtroCartaBusqueda.value.trim().toLowerCase();
     const items = state.cartasMaestro.filter(
       (c) =>
-        (!marca || c.marca === marca) &&
+        c.marca === marca &&
         (!agregador || c.agregador === agregador) &&
         (!term || c.nombre.toLowerCase().includes(term))
     );
@@ -1935,9 +2012,9 @@
     els.cartasList.innerHTML = "";
     els.cartasEmpty.classList.toggle("hidden", items.length > 0);
     if (!items.length) {
-      els.cartasEmpty.textContent = state.cartasMaestro.length
+      els.cartasEmpty.textContent = state.cartasMaestro.some((c) => c.marca === marca)
         ? "No hay cartas que coincidan con la búsqueda o los filtros."
-        : "No hay cartas registradas todavía.";
+        : "No hay cartas registradas todavía para esta marca.";
     }
 
     const frag = document.createDocumentFragment();
@@ -2046,7 +2123,9 @@
   // ------------------------------------------------------------------ //
   function populateCartaSelect(selectEl, selectedId) {
     const actual = selectedId !== undefined && selectedId !== null ? String(selectedId) : selectEl.value;
-    const cartas = [...state.cartasMaestro].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const cartas = state.cartasMaestro
+      .filter((c) => c.marca === state.cartasMarca)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
     selectEl.innerHTML = `<option value="">Selecciona una carta…</option>` + cartas.map((c) => {
       const meta = AGGREGATOR_META[c.agregador] || { label: c.agregador };
       return `<option value="${c.id}">${c.nombre.replace(/</g, "&lt;")} · ${c.marca.replace(/</g, "&lt;")} · ${meta.label}</option>`;
@@ -2366,7 +2445,7 @@
 
     const body = document.createElement("div");
     body.className = "carta-section-body";
-    body.dataset.categoriaId = esSinCategoria ? "" : containerKey;
+    body.dataset.preview2Container = containerKey;
     makeCarta2Droppable(body, carta);
     codigos.forEach((code) => {
       const producto = productosMap.get(String(code));
@@ -2379,31 +2458,149 @@
       empty.textContent = esSinCategoria ? "Todos los productos ya están ubicados en alguna categoría." : "Sin productos en esta categoría — arrastra una tarjeta aquí.";
       body.appendChild(empty);
     }
+    updateCartaOrderButtons(body);
 
     section.appendChild(body);
     return section;
   }
 
-  // Arrastrar una tarjeta de "Previsualizar" hasta otra sección la mueve a
-  // esa categoría (o a "Sin categoría"), usando el mismo helper seguro que
-  // el selector de "Asociar productos" — nunca reemplaza la lista completa
-  // de la categoría destino, solo agrega/quita el código soltado.
+  // ---- Drag & drop en "Previsualizar" (Cartas por agregador): reordenar
+  // dentro de una categoría y mover entre categorías. Usa el mismo patrón
+  // "vivo" (elementFromPoint + rAF) que la previsualización de Catálogo,
+  // pero al finalizar (dragend) persiste con cuidado: nunca reemplaza la
+  // lista completa de una categoría por el orden visible acá, porque esa
+  // categoría puede tener productos de OTRAS cartas — solo reacomoda, en su
+  // mismo lugar dentro de la lista completa, los códigos que pertenecen a
+  // ESTA carta (ver persistCarta2CategoriaOrder).
+  let carta2DragState = null;
+  let carta2DragRafId = null;
+  let carta2DragPending = null;
+
+  function carta2ContainerKeyOf(el) {
+    const container = el.closest("[data-preview2-container]");
+    return container ? container.dataset.preview2Container : null;
+  }
+
+  function carta2RowAtPoint(container, x, y) {
+    const el = document.elementFromPoint(x, y);
+    const row = el && el.closest(".carta-row");
+    if (!row || row.classList.contains("carta-dragging") || !container.contains(row)) return null;
+    return row;
+  }
+
+  function applyCarta2Reorder(container, x, y) {
+    const dragging = document.querySelector(".carta-dragging");
+    if (!dragging) return;
+    container.querySelector(".carta-section-empty")?.remove();
+    const overRow = carta2RowAtPoint(container, x, y);
+    if (!overRow) {
+      container.appendChild(dragging);
+    } else {
+      const box = overRow.getBoundingClientRect();
+      const before = y - box.top < box.height / 2;
+      container.insertBefore(dragging, before ? overRow : overRow.nextSibling);
+    }
+    updateCartaOrderButtons(container);
+  }
+
+  function scheduleCarta2Reorder(container, x, y) {
+    carta2DragPending = { container, x, y };
+    if (carta2DragRafId) return;
+    carta2DragRafId = requestAnimationFrame(() => {
+      carta2DragRafId = null;
+      const pending = carta2DragPending;
+      carta2DragPending = null;
+      if (pending) applyCarta2Reorder(pending.container, pending.x, pending.y);
+    });
+  }
+
   function makeCarta2Droppable(container, carta) {
     container.addEventListener("dragover", (e) => {
+      if (!carta2DragState) return;
       e.preventDefault();
       container.classList.add("carta-dragover");
+      scheduleCarta2Reorder(container, e.clientX, e.clientY);
     });
-    container.addEventListener("dragleave", () => {
-      container.classList.remove("carta-dragover");
+    container.addEventListener("dragleave", (e) => {
+      if (!container.contains(e.relatedTarget)) container.classList.remove("carta-dragover");
     });
-    container.addEventListener("drop", async (e) => {
+    container.addEventListener("drop", (e) => {
       e.preventDefault();
       container.classList.remove("carta-dragover");
-      const code = e.dataTransfer.getData("text/plain");
-      if (!code) return;
-      await assignAsociarCategoria(carta, code, container.dataset.categoriaId);
-      renderCarta2Preview(carta);
     });
+  }
+
+  async function carta2FinalizeDrag(row, carta) {
+    if (carta2DragRafId) {
+      cancelAnimationFrame(carta2DragRafId);
+      carta2DragRafId = null;
+      // Aplica ya mismo el último reacomodo pendiente en vez de descartarlo:
+      // si el arrastre fue muy rápido, todavía no había corrido el rAF y
+      // se perdería la posición exacta donde se soltó la tarjeta.
+      if (carta2DragPending) applyCarta2Reorder(carta2DragPending.container, carta2DragPending.x, carta2DragPending.y);
+      carta2DragPending = null;
+    }
+    if (!carta2DragState) return;
+    const toContainer = carta2ContainerKeyOf(row);
+    const { fromContainer, code } = carta2DragState;
+    carta2DragState = null;
+    document.querySelectorAll(".carta-dragover").forEach((el) => el.classList.remove("carta-dragover"));
+    if (!toContainer) return;
+
+    if (toContainer !== fromContainer) {
+      await assignAsociarCategoria(carta, code, toContainer === "sin-categoria" ? "" : toContainer);
+    }
+    const afectados = new Set([fromContainer, toContainer].filter((k) => k && k !== "sin-categoria"));
+    for (const categoriaId of afectados) {
+      await persistCarta2CategoriaOrder(carta, categoriaId);
+    }
+    renderCarta2Preview(carta);
+  }
+
+  // Reacomoda, DENTRO de la lista completa de la categoría (que puede tener
+  // productos de otras cartas), únicamente los códigos que pertenecen a esta
+  // carta — cada uno se queda en el mismo "casillero" que ya ocupaba, solo
+  // cambia qué código de esta carta va en cada casillero, según el orden
+  // visible acá. Así nunca se toca la posición de un producto de otra carta.
+  async function persistCarta2CategoriaOrder(carta, categoriaId) {
+    const container = els.preview2Sections.querySelector(`[data-preview2-container="${categoriaId}"]`);
+    if (!container) return;
+    const nuevoOrdenCarta = [...container.querySelectorAll(".carta-row")].map((el) => el.dataset.code);
+    const codigosCarta = new Set((carta.productos || []).map((p) => String(p.code)));
+    const listaCompleta = state.carta[categoriaId] || [];
+    const casilleros = [];
+    listaCompleta.forEach((code, idx) => {
+      if (codigosCarta.has(String(code))) casilleros.push(idx);
+    });
+    if (casilleros.length !== nuevoOrdenCarta.length) return; // estado inconsistente: no tocar
+    const nuevaLista = [...listaCompleta];
+    casilleros.forEach((idx, i) => {
+      nuevaLista[idx] = nuevoOrdenCarta[i];
+    });
+    if (nuevaLista.every((c, i) => c === listaCompleta[i])) return;
+
+    state.carta[categoriaId] = nuevaLista;
+    try {
+      await fetch(`/api/carta/categorias/${categoriaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigos: nuevaLista }),
+      });
+    } catch (_err) {
+      // La tarjeta ya se movió visualmente; un nuevo arrastre o recargar
+      // la vista vuelve a intentar guardar el orden.
+    }
+  }
+
+  function moveCarta2Row(carta, row, direction) {
+    const sibling = direction === "up" ? row.previousElementSibling : row.nextElementSibling;
+    if (!sibling || !sibling.classList.contains("carta-row")) return;
+    const container = row.parentElement;
+    if (direction === "up") container.insertBefore(row, sibling);
+    else container.insertBefore(sibling, row);
+    updateCartaOrderButtons(container);
+    const key = carta2ContainerKeyOf(row);
+    if (key && key !== "sin-categoria") persistCarta2CategoriaOrder(carta, key);
   }
 
   function buildCarta2NavItem(containerKey, titulo, count, esSinCategoria) {
@@ -2423,7 +2620,9 @@
     row.className = "carta-row" + (noDisponible ? " carta-row-no-disp" : "");
     row.draggable = true;
     row.dataset.code = String(producto.code);
-    row.title = "Arrastra para mover este producto a otra categoría";
+    row.title = esSinCategoria
+      ? "Arrastra para mover este producto a una categoría"
+      : "Arrastra para reordenar dentro de la categoría, o suéltalo en otra para moverlo";
 
     const info = carta2ResolvedInfo(carta, producto);
     const thumbInner = info.imagen
@@ -2433,6 +2632,15 @@
 
     row.innerHTML = `
       <span class="carta-row-handle"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.5"/><circle cx="8" cy="12" r="1.5"/><circle cx="8" cy="18" r="1.5"/><circle cx="16" cy="6" r="1.5"/><circle cx="16" cy="12" r="1.5"/><circle cx="16" cy="18" r="1.5"/></svg></span>
+      ${esSinCategoria ? "" : `
+      <div class="carta-row-order">
+        <button type="button" class="carta-row-up" title="Subir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 15 7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="carta-row-down" title="Bajar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 9 7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>`}
       <div class="carta-row-info">
         <p class="carta-row-name">${String(info.nombre).replace(/</g, "&lt;")} ${badge}</p>
         <p class="carta-row-desc">${String(info.descripcion).replace(/</g, "&lt;")}</p>
@@ -2449,13 +2657,19 @@
     `;
 
     row.addEventListener("dragstart", (e) => {
+      carta2DragState = { code: row.dataset.code, fromContainer: carta2ContainerKeyOf(row) };
       row.classList.add("carta-dragging");
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", row.dataset.code);
     });
-    row.addEventListener("dragend", () => row.classList.remove("carta-dragging"));
+    row.addEventListener("dragend", () => {
+      row.classList.remove("carta-dragging");
+      carta2FinalizeDrag(row, carta);
+    });
 
     if (!esSinCategoria) {
+      row.querySelector(".carta-row-up").addEventListener("click", () => moveCarta2Row(carta, row, "up"));
+      row.querySelector(".carta-row-down").addEventListener("click", () => moveCarta2Row(carta, row, "down"));
       row.querySelector(".carta-row-remove").addEventListener("click", async () => {
         await assignAsociarCategoria(carta, producto.code, "");
         renderCarta2Preview(carta);
@@ -3857,6 +4071,14 @@
   }
 
   els.preguntasSearch.addEventListener("input", renderPreguntas);
+  els.preguntasMarcaSelect.addEventListener("change", async () => {
+    state.preguntasMarca = els.preguntasMarcaSelect.value;
+    state.preguntasLoaded = false;
+    updatePreguntasMarcaGate();
+    if (state.preguntasMarca) {
+      await loadPreguntas();
+    }
+  });
 
   els.btnNuevaCategoria.addEventListener("click", () => {
     els.formCategoria.classList.toggle("hidden");
@@ -3870,7 +4092,11 @@
   els.filtroAgregador.addEventListener("change", renderCategorias);
 
   els.btnNuevaCarta.addEventListener("click", () => {
+    const abriendo = els.formCarta.classList.contains("hidden");
     els.formCarta.classList.toggle("hidden");
+    if (abriendo && state.cartasMarca) {
+      els.formCarta.elements.namedItem("marca").value = state.cartasMarca;
+    }
   });
   els.btnCancelarCarta.addEventListener("click", () => {
     els.formCarta.reset();
@@ -3878,8 +4104,24 @@
   });
   els.formCarta.addEventListener("submit", submitCarta);
   els.filtroCartaBusqueda.addEventListener("input", renderCartasMaestro);
-  els.filtroCartaMarca.addEventListener("change", renderCartasMaestro);
   els.filtroCartaAgregador.addEventListener("change", renderCartasMaestro);
+
+  els.cartasMarcaSelect.addEventListener("change", () => {
+    state.cartasMarca = els.cartasMarcaSelect.value;
+    updateCartasMarcaGate();
+    renderCartasMaestro();
+    populateCartaSelect(els.asociarCartaSelect);
+    populateCartaSelect(els.preview2CartaSelect);
+    // La carta elegida en "Asociar productos"/"Previsualizar" puede no
+    // pertenecer a la nueva marca — resetear esos paneles a su estado vacío.
+    state.asociarCarta = { carta: null, catalogo: null, filtro: "todos" };
+    els.asociarPanel.classList.add("hidden");
+    els.asociarSinCarta.classList.remove("hidden");
+    state.previewCarta = { carta: null };
+    els.preview2.classList.add("hidden");
+    els.preview2SinProductos.classList.add("hidden");
+    els.preview2SinCarta.classList.remove("hidden");
+  });
 
   [...els.cartasSubviewTabs.children].forEach((btn) => {
     btn.addEventListener("click", () => switchCartasSubview(btn.dataset.subview));

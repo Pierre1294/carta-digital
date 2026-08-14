@@ -214,31 +214,52 @@
             <p class="text-xs text-slate-400 mt-0.5">Nombre tal como está en Oracle Simphony, con la pregunta comercial equivalente para mostrar al cliente.</p>
           </div>
 
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 my-4">
-            <div class="relative flex-1 max-w-md">
-              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
-              <input id="preguntas-search" type="text" placeholder="Buscar pregunta…"
-                class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
-            </div>
-            <span id="preguntas-count" class="text-xs text-slate-500"></span>
+          <!-- Selector de marca: mismo patrón que Catálogo (ver catalog-marca-bar) —
+               en esta POC todas las marcas comparten el mismo servicio de Oracle
+               Simphony; cuando cada marca tenga su propia conexión, este selector es
+               el punto donde se debe invocar el servicio correspondiente (ver
+               backend/app.py get_preguntas). -->
+          <div class="catalog-marca-bar">
+            <label for="preguntas-marca-select" class="catalog-marca-label">Marca</label>
+            <select id="preguntas-marca-select" class="cfg-input catalog-marca-select">
+              <option value="">Selecciona una marca…</option>
+            </select>
+            <span id="preguntas-marca-hint" class="catalog-marca-hint"></span>
           </div>
 
-          <div id="preguntas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
-          <div id="preguntas-loading" class="hidden py-16 text-center text-sm text-slate-400">Cargando preguntas…</div>
-          <div id="preguntas-empty" class="hidden py-16 text-center text-sm text-slate-400">No se encontraron preguntas.</div>
+          <div id="preguntas-marca-empty" class="catalog-marca-empty">
+            <svg class="w-8 h-8 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-medium text-slate-600 mt-3">Selecciona una marca para ver sus preguntas</p>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">Cada marca podrá tener su propio servicio de preguntas cuando se conecte de forma independiente. Por ahora, todas usan el mismo catálogo de Oracle Simphony.</p>
+          </div>
 
-          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm min-w-[560px]">
-                <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
-                  <tr>
-                    <th class="text-left px-4 py-2.5 font-medium w-24">Código</th>
-                    <th class="text-left px-4 py-2.5 font-medium">Pregunta en Oracle Simphony</th>
-                    <th class="text-left px-4 py-2.5 font-medium">Pregunta comercial</th>
-                  </tr>
-                </thead>
-                <tbody id="preguntas-tbody" class="divide-y divide-slate-100"></tbody>
-              </table>
+          <div id="preguntas-content" class="hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 my-4">
+              <div class="relative flex-1 max-w-md">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
+                <input id="preguntas-search" type="text" placeholder="Buscar pregunta…"
+                  class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-300" />
+              </div>
+              <span id="preguntas-count" class="text-xs text-slate-500"></span>
+            </div>
+
+            <div id="preguntas-error" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3"></div>
+            <div id="preguntas-loading" class="hidden py-16 text-center text-sm text-slate-400">Cargando preguntas…</div>
+            <div id="preguntas-empty" class="hidden py-16 text-center text-sm text-slate-400">No se encontraron preguntas.</div>
+
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-[640px]">
+                  <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                    <tr>
+                      <th class="text-left px-4 py-2.5 font-medium w-24">Código</th>
+                      <th class="text-left px-4 py-2.5 font-medium">Pregunta en Oracle Simphony</th>
+                      <th class="text-left px-4 py-2.5 font-medium">Pregunta comercial y cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody id="preguntas-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -292,6 +313,25 @@
             <p class="text-xs text-slate-400 mt-0.5">Maestro de cartas, asociación de productos y previsualización — por marca y agregador.</p>
           </div>
 
+          <!-- Selector de marca: mismo patrón que Catálogo/Preguntas (obligatorio
+               antes de listar). En esta POC todas las marcas comparten el mismo
+               servicio de Oracle Simphony, así que "marca" solo filtra los datos
+               locales (cartas, categorías) ya guardados para esa marca. -->
+          <div class="catalog-marca-bar">
+            <label for="cartas-marca-select" class="catalog-marca-label">Marca</label>
+            <select id="cartas-marca-select" class="cfg-input catalog-marca-select">
+              <option value="">Selecciona una marca…</option>
+            </select>
+            <span id="cartas-marca-hint" class="catalog-marca-hint"></span>
+          </div>
+
+          <div id="cartas-marca-empty" class="catalog-marca-empty">
+            <svg class="w-8 h-8 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-medium text-slate-600 mt-3">Selecciona una marca para ver sus cartas</p>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">Los maestros, la asociación de productos y la previsualización se filtran según la marca elegida.</p>
+          </div>
+
+          <div id="cartas-content" class="hidden">
           <nav id="cartas-subview-tabs" class="segmented mb-4">
             <button type="button" data-subview="maestros" class="active">Maestros</button>
             <button type="button" data-subview="asociar">Asociar productos</button>
@@ -303,7 +343,6 @@
             <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
               <div class="flex flex-wrap items-center gap-2">
                 <input id="filtro-carta-busqueda" type="text" placeholder="Buscar carta por nombre…" class="cfg-input text-xs !py-1.5 w-56" />
-                <select id="filtro-carta-marca" class="cfg-input text-xs !py-1.5"><option value="">Todas las marcas</option></select>
                 <select id="filtro-carta-agregador" class="cfg-input text-xs !py-1.5"><option value="">Todos los agregadores</option></select>
               </div>
               <button id="btn-nueva-carta" class="text-xs font-medium px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700 transition whitespace-nowrap">+ Nueva carta</button>
@@ -396,7 +435,7 @@
                     <strong id="preview2-stat-pendientes">0</strong>
                   </div>
                 </div>
-                <p class="carta-preview-hint">Arrastra una tarjeta a otra categoría (o a "Sin categoría") para corregir dónde aparece.</p>
+                <p class="carta-preview-hint">Arrastra una tarjeta para reordenarla dentro de su categoría, o suéltala en otra (o en "Sin categoría") para moverla.</p>
                 <nav id="preview2-nav-list" class="carta-nav-list"></nav>
               </aside>
 
@@ -404,6 +443,7 @@
                 <div id="preview2-sections"></div>
               </div>
             </div>
+          </div>
           </div>
         </section>
 
@@ -494,10 +534,14 @@
     <td class="px-4 py-2.5 text-slate-600 pregunta-oracle"></td>
     <td class="px-4 py-2.5">
       <div class="flex flex-col gap-1.5">
-        <input type="text" class="cfg-input pregunta-comercial-input w-full" placeholder="Escribe la pregunta comercial…" />
+        <div class="flex items-center gap-2">
+          <input type="text" class="cfg-input pregunta-comercial-input flex-1 min-w-0" placeholder="Escribe la pregunta comercial…" />
+          <input type="number" min="1" step="1" class="cfg-input pregunta-cantidad-input w-20 shrink-0" title="Cantidad máxima de selección para el agregador" placeholder="Cant." />
+        </div>
         <div class="pregunta-actions hidden flex items-center gap-2">
           <button type="button" class="btn-mini btn-mini-primary btn-guardar-pregunta">Guardar</button>
           <button type="button" class="btn-mini btn-mini-ghost btn-cancelar-pregunta">Cancelar</button>
+          <span class="pregunta-cantidad-hint text-xs text-amber-600 hidden">La cantidad debe ser mayor a 0 para guardar.</span>
           <span class="pregunta-msg text-xs font-medium hidden"></span>
         </div>
       </div>
