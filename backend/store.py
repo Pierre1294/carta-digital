@@ -15,6 +15,7 @@ PREGUNTAS_PATH = BACKEND_DIR / "preguntas_store.json"
 PREGUNTAS_CANTIDAD_PATH = BACKEND_DIR / "preguntas_cantidad_store.json"
 CATEGORIAS_PATH = BACKEND_DIR / "categorias_store.json"
 PRODUCTO_CAMPOS_PATH = BACKEND_DIR / "producto_campos_store.json"
+PRODUCTO_HIJO_CAMPOS_PATH = BACKEND_DIR / "producto_hijo_campos_store.json"
 MARCAS_PATH = BACKEND_DIR / "marcas_store.json"
 CARTA_PATH = BACKEND_DIR / "carta_store.json"
 CARTAS_MAESTRO_PATH = BACKEND_DIR / "cartas_maestro_store.json"
@@ -230,6 +231,33 @@ def save_producto_campos(code, agregador, campos):
     actuales.update(campos)
     producto[agregador] = actuales
     _write_json(PRODUCTO_CAMPOS_PATH, data)
+    return actuales
+
+
+# ------------------------------------------------------------------ #
+# Campos de "productos hijos": las opciones dentro de una pregunta (item
+# de un grupo de combo, o condimento) — ej. "Coca-Cola" dentro de la
+# pregunta "Bebida". Un mismo hijo puede aparecer en varios combos/
+# preguntas distintas; su imagen se guarda UNA sola vez por (código de
+# hijo, agregador) y se comparte en todas partes donde aparece, igual
+# que el producto padre.
+# ------------------------------------------------------------------ #
+def load_producto_hijo_campos():
+    """dict: {codigo_hijo: {AGREGADOR: {NombreCampo: valor}}}"""
+    return _read_json(PRODUCTO_HIJO_CAMPOS_PATH, {})
+
+
+def get_producto_hijo_campos(code, agregador):
+    return load_producto_hijo_campos().get(str(code), {}).get(agregador, {})
+
+
+def save_producto_hijo_campos(code, agregador, campos):
+    data = load_producto_hijo_campos()
+    hijo = data.setdefault(str(code), {})
+    actuales = hijo.get(agregador, {})
+    actuales.update(campos)
+    hijo[agregador] = actuales
+    _write_json(PRODUCTO_HIJO_CAMPOS_PATH, data)
     return actuales
 
 

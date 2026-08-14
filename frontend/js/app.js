@@ -2782,8 +2782,42 @@
     return JSON.stringify(state.preview.preguntasOrdenDraft) !== JSON.stringify(state.preview.preguntasOrdenOriginal);
   }
 
+  // Imagen de un producto hijo (opción dentro de una pregunta): se guarda UNA
+  // sola vez por (código de hijo, agregador) — ver hijoCampos/hijoDraft.
+  function hijoImagenValor(source, agg, hijoCode) {
+    const porAgg = (source && source[agg]) || {};
+    return (porAgg[hijoCode] || {}).Imagen ?? "";
+  }
+
+  function setHijoImagenDraft(agg, hijoCode, valor) {
+    const draft = state.preview.hijoDraft;
+    draft[agg] = draft[agg] || {};
+    draft[agg][hijoCode] = { ...(draft[agg][hijoCode] || {}), Imagen: valor };
+  }
+
+  function buildChangedHijosByAgg() {
+    const changedByAgg = {}; // {agg: {hijoCode: {Imagen: valor}}}
+    (state.preview.fieldAggregators || []).forEach((agg) => {
+      const draftMap = state.preview.hijoDraft[agg] || {};
+      const savedMap = state.preview.hijoCampos[agg] || {};
+      const codigos = new Set([...Object.keys(draftMap), ...Object.keys(savedMap)]);
+      codigos.forEach((code) => {
+        const draftVal = hijoImagenValor(state.preview.hijoDraft, agg, code);
+        const savedVal = hijoImagenValor(state.preview.hijoCampos, agg, code);
+        if (String(draftVal) !== String(savedVal)) {
+          changedByAgg[agg] = changedByAgg[agg] || {};
+          changedByAgg[agg][code] = { Imagen: draftVal };
+        }
+      });
+    });
+    return changedByAgg;
+  }
+
   function updateSaveButtonState() {
-    const hayCambios = Object.keys(buildChangedByAgg()).length > 0 || preguntasOrdenChanged();
+    const hayCambios =
+      Object.keys(buildChangedByAgg()).length > 0 ||
+      Object.keys(buildChangedHijosByAgg()).length > 0 ||
+      preguntasOrdenChanged();
     previewTarget.btnSavePreview.disabled = !hayCambios;
   }
 
@@ -3006,11 +3040,21 @@
     // Campos (x4 agregadores) + preguntas-orden + estado no dependen entre
     // sí, así que se piden todos en una sola tanda paralela en vez de en
     // rondas sucesivas: eso es lo que hacía lenta la apertura del editor.
-    const [campoResults, preguntasOrdenData, estadoData] = await Promise.all([
+    const [campoResults, hijoCampoResults, preguntasOrdenData, estadoData] = await Promise.all([
       Promise.all(
         FIELD_AGGREGATORS.map((agg) =>
           fetch(`/api/productos/${encodeURIComponent(product.code)}/campos?agregador=${agg}`)
             .then((res) => res.json().then((data) => ({ agg, ok: res.ok, data })))
+        )
+      ),
+      // Imagen de los "productos hijos" (opciones dentro de una pregunta): se
+      // trae en bloque para los 4 agregadores, igual que /api/productos/campos
+      // en "Previsualizar carta" — evita pedirla una por una por cada opción.
+      Promise.all(
+        FIELD_AGGREGATORS.map((agg) =>
+          fetch(`/api/productos-hijos/campos?agregador=${agg}`)
+            .then((res) => res.json().then((data) => ({ agg, ok: res.ok, data })))
+            .catch(() => ({ agg, ok: false, data: {} }))
         )
       ),
       fetch(`/api/productos/${encodeURIComponent(product.code)}/preguntas-orden`)
@@ -3030,6 +3074,14 @@
     campoResults.forEach(({ agg, data }) => {
       state.preview.campos[agg] = data.campos || {};
       state.preview.draft[agg] = { ...(data.campos || {}) };
+    });
+
+    hijoCampoResults.forEach(({ agg, ok, data }) => {
+      const campos = ok ? (data.campos || {}) : {};
+      state.preview.hijoCampos[agg] = campos;
+      state.preview.hijoDraft[agg] = Object.fromEntries(
+        Object.entries(campos).map(([code, valores]) => [code, { ...valores }])
+      );
     });
 
     state.preview.fieldAggregators = fieldAggregators;
@@ -3098,6 +3150,8 @@
       rawProduct: product,
       campos: {},
       draft: {},
+      hijoCampos: {}, // {agregador: {codigo_hijo: {Imagen: valor}}} — imagen de los "productos hijos" (opciones)
+      hijoDraft: {},
       aggregator: null,
       fieldAggregators: [],
       modalTab: "general",
@@ -3151,6 +3205,8 @@
       rawProduct: product,
       campos: {},
       draft: {},
+      hijoCampos: {}, // {agregador: {codigo_hijo: {Imagen: valor}}} — imagen de los "productos hijos" (opciones)
+      hijoDraft: {},
       aggregator: null,
       fieldAggregators: [],
       modalTab: "general",
@@ -3214,9 +3270,11 @@
 
   async function doSaveAll() {
     const changedByAgg = buildChangedByAgg();
+    const changedHijosByAgg = buildChangedHijosByAgg();
     const aggsToSave = Object.keys(changedByAgg);
+    const hijoAggsToSave = Object.keys(changedHijosByAgg);
     const ordenDirty = preguntasOrdenChanged();
-    if (!aggsToSave.length && !ordenDirty) return;
+    if (!aggsToSave.length && !hijoAggsToSave.length && !ordenDirty) return;
 
     previewTarget.btnSavePreview.disabled = true;
     const originalLabel = previewTarget.btnSavePreview.textContent;
@@ -3233,6 +3291,22 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `No se pudo guardar (${FIELD_AGG_META[agg].label}).`);
         return { type: "campos", agg, campos: data.campos };
+      });
+      hijoAggsToSave.forEach((agg) => {
+        Object.entries(changedHijosByAgg[agg]).forEach(([hijoCode, campos]) => {
+          tareas.push(
+            (async () => {
+              const res = await fetch(`/api/productos-hijos/${encodeURIComponent(hijoCode)}/campos?agregador=${agg}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(campos),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.error || `No se pudo guardar la imagen de una opción (${FIELD_AGG_META[agg].label}).`);
+              return { type: "hijoCampos", agg, hijoCode, campos: data.campos };
+            })()
+          );
+        });
       });
       if (ordenDirty) {
         tareas.push(
@@ -3254,6 +3328,11 @@
         if (r.type === "campos") {
           state.preview.campos[r.agg] = r.campos;
           state.preview.draft[r.agg] = { ...r.campos };
+        } else if (r.type === "hijoCampos") {
+          state.preview.hijoCampos[r.agg] = state.preview.hijoCampos[r.agg] || {};
+          state.preview.hijoCampos[r.agg][r.hijoCode] = r.campos;
+          state.preview.hijoDraft[r.agg] = state.preview.hijoDraft[r.agg] || {};
+          state.preview.hijoDraft[r.agg][r.hijoCode] = { ...r.campos };
         } else if (r.type === "orden") {
           state.preview.preguntasOrdenOriginal = [...state.preview.preguntasOrdenDraft];
         }
@@ -3263,6 +3342,7 @@
         renderTabPanel(state.preview.modalTab);
       } else {
         renderFormSections();
+        renderOpcionesPanelV2();
       }
       renderPreviewMockup();
       await refreshPreviewEstado();
@@ -3425,6 +3505,7 @@
         state.preview.aggregator = agg;
         renderAggSelector();
         renderFormSections();
+        renderOpcionesPanelV2();
         renderPreviewMockup();
         refreshPreviewEstado();
         renderCartasPanel();
@@ -3449,7 +3530,9 @@
     const agg = state.preview.aggregator;
     const aggFields = PRODUCT_FIELDS.filter((f) => f.aggregators.includes(agg));
 
-    SECTION_ORDER.forEach((seccion) => {
+    // "Menú y categoría" no se muestra en Vista previa 2 (a diferencia del
+    // modal Vista previa, donde sí aparece dentro de "Información general").
+    SECTION_ORDER.filter((seccion) => seccion !== "Menú y categoría").forEach((seccion) => {
       const camposSeccion = aggFields.filter((f) => f.section === seccion);
       if (!camposSeccion.length) return;
 
@@ -3603,7 +3686,7 @@
         code: String(group.code),
         principal: !!group.principal,
         titulo: preguntaDisplayName(group.code, group.name),
-        items: (group.items || []).map((it) => ({ name: it.name, price: it.price })),
+        items: (group.items || []).map((it) => ({ code: it.code, name: it.name, price: it.price })),
       }));
     }
     const subgrupos = {};
@@ -3620,7 +3703,7 @@
       code: key,
       principal: false,
       titulo: preguntaDisplayName(subgrupos[key].code, subgrupos[key].name),
-      items: subgrupos[key].items.map((it) => ({ name: it.name, price: it.price })),
+      items: subgrupos[key].items.map((it) => ({ code: it.code, name: it.name, price: it.price })),
     }));
   }
 
@@ -3704,12 +3787,40 @@
     header.appendChild(right);
     card.appendChild(header);
 
+    const agg = state.preview.aggregator;
     const list = document.createElement("div");
-    list.className = "space-y-1";
+    list.className = "space-y-0.5";
     bloque.items.forEach((item) => {
+      const hijoCode = item.code !== undefined && item.code !== null ? String(item.code) : "";
       const itemRow = document.createElement("div");
-      itemRow.className = "flex justify-between text-xs text-slate-500 py-0.5";
-      itemRow.innerHTML = `<span>${(item.name || "").replace(/</g, "&lt;")}</span><span>${fmtPrice(item.price)}</span>`;
+      itemRow.className = "pregunta-item-row";
+
+      const top = document.createElement("div");
+      top.className = "pregunta-item-top";
+      const imagenGuardada = hijoCode && agg ? hijoImagenValor(state.preview.hijoCampos, agg, hijoCode) : "";
+      top.innerHTML =
+        (!editable && imagenGuardada
+          ? `<img class="pregunta-item-thumb" src="${String(imagenGuardada).replace(/"/g, "&quot;")}" alt="" onerror="this.style.display='none'" />`
+          : "") +
+        `<span class="truncate">${(item.name || "").replace(/</g, "&lt;")}</span><span>${fmtPrice(item.price)}</span>`;
+      itemRow.appendChild(top);
+
+      if (editable && hijoCode && agg) {
+        const imgWrap = document.createElement("div");
+        imgWrap.className = "pregunta-item-imagen";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = `hijo-imagen-${hijoCode}`;
+        input.placeholder = "URL de imagen (opcional)";
+        input.value = hijoImagenValor(state.preview.hijoDraft, agg, hijoCode);
+        input.addEventListener("input", () => {
+          setHijoImagenDraft(agg, hijoCode, input.value);
+          updateSaveButtonState();
+        });
+        imgWrap.appendChild(input);
+        itemRow.appendChild(imgWrap);
+      }
+
       list.appendChild(itemRow);
     });
     card.appendChild(list);
@@ -3718,6 +3829,10 @@
       card.classList.add("pregunta-draggable");
       card.draggable = true;
       card.addEventListener("dragstart", (e) => {
+        if (e.target.closest(".pregunta-item-imagen")) {
+          e.preventDefault();
+          return;
+        }
         preguntaDragState = { code: bloque.code };
         card.classList.add("pregunta-dragging");
         e.dataTransfer.effectAllowed = "move";

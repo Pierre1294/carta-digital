@@ -498,6 +498,32 @@ def post_producto_campos(code):
     return jsonify({"code": code, "agregador": agregador, "campos": campos})
 
 
+# ------------------------------------------------------------------ #
+# Campos de "productos hijos" (opciones dentro de una pregunta: items de
+# un grupo de combo o condimentos). No se validan contra el árbol de
+# catálogo porque su código puede no existir como producto de nivel
+# superior — su nombre/precio ya vienen embebidos en el producto padre
+# (ver sts_client.build_catalog_tree), acá solo se guarda su imagen.
+# ------------------------------------------------------------------ #
+@app.route("/api/productos-hijos/<code>/campos", methods=["GET"])
+def get_producto_hijo_campos(code):
+    agregador, error = _validar_agregador()
+    if error:
+        return error
+    return jsonify({"code": code, "agregador": agregador, "campos": store.get_producto_hijo_campos(code, agregador)})
+
+
+@app.route("/api/productos-hijos/<code>/campos", methods=["POST"])
+def post_producto_hijo_campos(code):
+    agregador, error = _validar_agregador()
+    if error:
+        return error
+
+    body = request.get_json(force=True, silent=True) or {}
+    campos = store.save_producto_hijo_campos(code, agregador, body)
+    return jsonify({"code": code, "agregador": agregador, "campos": campos})
+
+
 @app.route("/api/productos/estado", methods=["GET"])
 def get_productos_estado():
     """Estado (progreso + alertas) de cada producto para un agregador.
@@ -649,6 +675,25 @@ def get_productos_campos_bulk():
         if campos.get(agregador)
     }
     return jsonify({"agregador": agregador, "campos": campos_por_producto})
+
+
+@app.route("/api/productos-hijos/campos", methods=["GET"])
+def get_productos_hijos_campos_bulk():
+    """Campos guardados de TODOS los productos hijos para un agregador, en un
+    solo llamado (mismo patrón que /api/productos/campos). Lo usa la pestaña
+    Opciones/Preguntas del editor para mostrar la imagen de cada opción sin
+    pedirla una por una.
+    """
+    agregador, error = _validar_agregador()
+    if error:
+        return error
+    data = store.load_producto_hijo_campos()
+    campos_por_hijo = {
+        code: campos[agregador]
+        for code, campos in data.items()
+        if campos.get(agregador)
+    }
+    return jsonify({"agregador": agregador, "campos": campos_por_hijo})
 
 
 if __name__ == "__main__":
