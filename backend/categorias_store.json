@@ -336,19 +336,11 @@
     "subcategorias": []
   },
   {
-    "id": 1,
-    "nombre": "Banquete del Día",
-    "marca": "Popeyes",
-    "agregador": "RAPPI",
-    "activo": true,
-    "subcategorias": []
-  },
-  {
     "id": 2,
     "nombre": "Hora del Almuerzo",
     "marca": "Popeyes",
     "agregador": "RAPPI",
-    "activo": true,
+    "activo": false,
     "subcategorias": []
   },
   {
@@ -362,6 +354,14 @@
   {
     "id": 4,
     "nombre": "Salsaton Futbol",
+    "marca": "Popeyes",
+    "agregador": "RAPPI",
+    "activo": true,
+    "subcategorias": []
+  },
+  {
+    "id": 1,
+    "nombre": "Banquete del Día",
     "marca": "Popeyes",
     "agregador": "RAPPI",
     "activo": true,

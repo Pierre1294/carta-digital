@@ -2789,12 +2789,6 @@
     return (porAgg[hijoCode] || {}).Imagen ?? "";
   }
 
-  function setHijoImagenDraft(agg, hijoCode, valor) {
-    const draft = state.preview.hijoDraft;
-    draft[agg] = draft[agg] || {};
-    draft[agg][hijoCode] = { ...(draft[agg][hijoCode] || {}), Imagen: valor };
-  }
-
   function buildChangedHijosByAgg() {
     const changedByAgg = {}; // {agg: {hijoCode: {Imagen: valor}}}
     (state.preview.fieldAggregators || []).forEach((agg) => {
@@ -3799,27 +3793,11 @@
       top.className = "pregunta-item-top";
       const imagenGuardada = hijoCode && agg ? hijoImagenValor(state.preview.hijoCampos, agg, hijoCode) : "";
       top.innerHTML =
-        (!editable && imagenGuardada
+        (imagenGuardada
           ? `<img class="pregunta-item-thumb" src="${String(imagenGuardada).replace(/"/g, "&quot;")}" alt="" onerror="this.style.display='none'" />`
           : "") +
         `<span class="truncate">${(item.name || "").replace(/</g, "&lt;")}</span><span>${fmtPrice(item.price)}</span>`;
       itemRow.appendChild(top);
-
-      if (editable && hijoCode && agg) {
-        const imgWrap = document.createElement("div");
-        imgWrap.className = "pregunta-item-imagen";
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `hijo-imagen-${hijoCode}`;
-        input.placeholder = "URL de imagen (opcional)";
-        input.value = hijoImagenValor(state.preview.hijoDraft, agg, hijoCode);
-        input.addEventListener("input", () => {
-          setHijoImagenDraft(agg, hijoCode, input.value);
-          updateSaveButtonState();
-        });
-        imgWrap.appendChild(input);
-        itemRow.appendChild(imgWrap);
-      }
 
       list.appendChild(itemRow);
     });
